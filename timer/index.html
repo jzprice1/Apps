@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes</title>
+
+<!-- Makes it feel like an app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<style>
+  body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    font-size: 1.1rem;
+  }
+
+  textarea {
+    flex: 1;
+    background: black;
+    color: white;
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 16px;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>Notes</header>
+
+<textarea id="note" placeholder="Start typing…"></textarea>
+
+<script>
+  const STORAGE_KEY = "simple_notepad_content";
+  const textarea = document.getElementById("note");
+
+  // Load saved note
+  textarea.value = localStorage.getItem(STORAGE_KEY) || "";
+
+  // Save as you type
+  textarea.addEventListener("input", () => {
+    localStorage.setItem(STORAGE_KEY, textarea.value);
+  });
+</script>
+
+</body>
+</html>
