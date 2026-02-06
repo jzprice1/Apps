@@ -40,11 +40,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%; /* full width */
+    width: 100%;
   }
 
   #timer {
-    font-size: 6rem; /* bigger timer */
+    font-size: 6rem;
     width: 100%;
     text-align: center;
   }
@@ -130,9 +130,9 @@
   }
 
   function changeTimerLength() {
-    const newMinutes = parseInt(prompt("Enter new timer length (minutes):"), 10);
+    const newMinutes = parseFloat(prompt("Enter new timer length (minutes):"));
     if (!isNaN(newMinutes) && newMinutes > 0) {
-      TIMER_DURATION = newMinutes * 60000;
+      TIMER_DURATION = newMinutes * 60000; // supports decimals
       localStorage.setItem(LENGTH_KEY, newMinutes);
       startTimer();
     }
@@ -142,7 +142,7 @@
   resetButton.addEventListener("click", startTimer);
 
   // Restore saved timer length
-  const savedLength = parseInt(localStorage.getItem(LENGTH_KEY), 10);
+  const savedLength = parseFloat(localStorage.getItem(LENGTH_KEY));
   if (!isNaN(savedLength) && savedLength > 0) {
     TIMER_DURATION = savedLength * 60000;
   }
