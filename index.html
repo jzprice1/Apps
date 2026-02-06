@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2 Minute Timer</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  #clock {
+    text-align: center;
+    padding: 12px 0;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #333;
+  }
+
+  #timer-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4rem;
+  }
+
+  #reset {
+    background: black;
+    color: white;
+    border: 1px solid white;
+    padding: 16px;
+    font-size: 1.2rem;
+    margin: 16px;
+    border-radius: 8px;
+  }
+
+  #reset:active {
+    background: #222;
+  }
+</style>
+</head>
+<body>
+
+<div id="clock"></div>
+
+<div id="timer-container">
+  <div id="timer">2:00</div>
+</div>
+
+<button id="reset">Reset</button>
+
+<script>
+  const TIMER_DURATION = 120000; // 2 minutes in ms
+  const STORAGE_KEY = "accurate_timer_start";
+
+  const clock = document.getElementById("clock");
+  const timerDisplay = document.getElementById("timer");
+  const resetButton = document.getElementById("reset");
+
+  let interval;
+
+  function updateClock() {
+    const now = new Date();
+    clock.textContent = now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+  }
+
+  function getRemainingTime() {
+    const startTime = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+    if (!startTime) return 0;
+
+    const elapsed = Date.now() - startTime;
+    return Math.max(0, TIMER_DURATION - elapsed);
+  }
+
+  function renderTimer() {
+    const remainingMs = getRemainingTime();
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    timerDisplay.textContent =
+      minutes + ":" + String(seconds).padStart(2, "0");
+
+    if (remainingMs <= 0) {
+      clearInterval(interval);
+      timerDisplay.textContent = "0:00";
+      // intentionally do nothing
+    }
+  }
+
+  function startTimer() {
+    clearInterval(interval);
+    localStorage.setItem(STORAGE_KEY, Date.now());
+    renderTimer();
+
+    interval = setInterval(renderTimer, 1000);
+  }
+
+  resetButton.addEventListener("click", startTimer);
+
+  // Restore timer state on reopen
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    startTimer();
+  } else {
+    renderTimer();
+    interval = setInterval(renderTimer, 1000);
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
