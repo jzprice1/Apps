@@ -11,67 +11,67 @@
     background: black;
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    display: flex;
-    flex-direction: column;
     height: 100vh;
+    overflow: hidden;
   }
 
-  /* CLOCK + TIMER */
-  #clock {
-    text-align: center;
-    padding: 16px 0;
+  /* TOP BAR */
+  #topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
     font-size: 2rem;
     border-bottom: 1px solid #333;
-    position: relative;
   }
 
-  #edit-timer {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+  #topbar button {
     background: none;
     border: none;
     color: white;
-    font-size: 1.4rem;
+    font-size: 2rem;
     cursor: pointer;
   }
 
+  /* TIMER */
   #timer-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    text-align: center;
     padding: 12px 0;
   }
 
   #timer {
     font-size: 4rem;
-    text-align: center;
   }
 
-  #reset {
-    background: black;
-    color: white;
-    border: 1px solid white;
+  #timer-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px 0;
+  }
+
+  #timer-buttons button {
+    flex: 1;
     padding: 10px;
     font-size: 1.1rem;
-    margin: 10px auto;
+    background: #222;
+    color: white;
+    border: 1px solid #444;
     border-radius: 8px;
-    width: 90%;
   }
 
-  #reset:active {
-    background: #222;
+  #timer-buttons button:active {
+    background: #333;
   }
 
   /* WORKOUT TRACKER */
-  #content {
-    flex: 1;
+  #tracker-screen {
+    height: calc(100vh - 70px);
     overflow-y: auto;
     padding: 20px;
   }
 
-  #content h2 {
+  #tracker-screen h2 {
     text-align: center;
     font-size: 2rem;
     font-weight: 600;
@@ -130,7 +130,38 @@
     border-radius: 6px;
   }
 
-  /* TOAST POPUP */
+  /* HISTORY SCREEN */
+  #history-screen {
+    display: none;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .history-entry {
+    border: 1px solid #444;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    background: #1a1a1a;
+  }
+
+  .history-entry h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+  }
+
+  #history-summary {
+    margin-top: 20px;
+    padding: 12px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    font-family: monospace;
+  }
+
+  /* TOAST */
   #toast {
     position: fixed;
     bottom: 30px;
@@ -153,22 +184,26 @@
 </head>
 <body>
 
-<!-- CLOCK -->
-<div id="clock">
+<!-- TOP BAR -->
+<div id="topbar">
+  <button id="open-history">📅</button>
   <span id="clock-text"></span>
-  <button id="edit-timer" title="Change timer length">✏️</button>
+  <button id="open-tracker">⏱️</button>
 </div>
 
-<!-- TIMER -->
-<div id="timer-container">
-  <div id="timer">2:00</div>
-</div>
+<!-- TRACKER SCREEN -->
+<div id="tracker-screen">
+  <div id="timer-container">
+    <div id="timer">2:00</div>
+  </div>
 
-<button id="reset">Reset Timer</button>
+  <div id="timer-buttons">
+    <button id="reset">Reset Timer</button>
+    <button id="edit-timer">✏️ Edit</button>
+  </div>
 
-<!-- WORKOUT TRACKER -->
-<div id="content">
   <h2>Workout Tracker</h2>
+
   <div id="exerciseContainer"></div>
 
   <button id="doneBtn" class="action">Done</button>
@@ -177,166 +212,248 @@
   <div id="summary"></div>
 </div>
 
+<!-- HISTORY SCREEN -->
+<div id="history-screen">
+  <div id="history-list"></div>
+  <button id="history-summary-btn" class="action">Summary</button>
+  <button id="history-copy-btn" class="action">Copy Summary</button>
+<div id="history-summary"></div>
+
+</div>
+
 <!-- TOAST -->
 <div id="toast">Copied!</div>
 
 <script>
-  /* ---------------- CLOCK ---------------- */
-  const clock = document.getElementById("clock-text");
-  function updateClock() {
-    const now = new Date();
-    clock.textContent = now.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    });
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
+/* CLOCK */
+const clock = document.getElementById("clock-text");
+function updateClock() {
+  const now = new Date();
+  clock.textContent = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+updateClock();
+setInterval(updateClock, 1000);
 
-  /* ---------------- TIMER ---------------- */
-  let TIMER_DURATION = 120000;
-  const STORAGE_KEY = "accurate_timer_start";
-  const LENGTH_KEY = "timer_length_minutes";
+/* TIMER */
+let TIMER_DURATION = 120000;
+const STORAGE_KEY = "accurate_timer_start";
+const LENGTH_KEY = "timer_length_minutes";
 
-  const timerDisplay = document.getElementById("timer");
-  const resetButton = document.getElementById("reset");
-  const editButton = document.getElementById("edit-timer");
+const timerDisplay = document.getElementById("timer");
+const resetButton = document.getElementById("reset");
+const editButton = document.getElementById("edit-timer");
 
-  let interval;
+let interval;
 
-  function getRemainingTime() {
-    const startTime = parseInt(localStorage.getItem(STORAGE_KEY), 10);
-    if (!startTime) return 0;
-    const elapsed = Date.now() - startTime;
-    return Math.max(0, TIMER_DURATION - elapsed);
-  }
+function getRemainingTime() {
+  const startTime = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+  if (!startTime) return 0;
+  const elapsed = Date.now() - startTime;
+  return Math.max(0, TIMER_DURATION - elapsed);
+}
 
-  function renderTimer() {
-    const remainingMs = getRemainingTime();
-    const totalSeconds = Math.ceil(remainingMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    timerDisplay.textContent = minutes + ":" + String(seconds).padStart(2, "0");
+function renderTimer() {
+  const remainingMs = getRemainingTime();
+  const totalSeconds = Math.ceil(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  timerDisplay.textContent = minutes + ":" + String(seconds).padStart(2, "0");
 
-    if (remainingMs <= 0) {
-      clearInterval(interval);
-      timerDisplay.textContent = "0:00";
-    }
-  }
-
-  function startTimer() {
+  if (remainingMs <= 0) {
     clearInterval(interval);
-    localStorage.setItem(STORAGE_KEY, Date.now());
-    renderTimer();
-    interval = setInterval(renderTimer, 1000);
+    timerDisplay.textContent = "0:00";
   }
+}
 
-  function changeTimerLength() {
-    const newMinutes = parseFloat(prompt("Enter new timer length (minutes):"));
-    if (!isNaN(newMinutes) && newMinutes > 0) {
-      TIMER_DURATION = newMinutes * 60000;
-      localStorage.setItem(LENGTH_KEY, newMinutes);
-      startTimer();
-    }
-  }
+function startTimer() {
+  clearInterval(interval);
+  localStorage.setItem(STORAGE_KEY, Date.now());
+  renderTimer();
+  interval = setInterval(renderTimer, 1000);
+}
 
-  editButton.addEventListener("click", changeTimerLength);
-  resetButton.addEventListener("click", startTimer);
+resetButton.addEventListener("click", startTimer);
 
-  const savedLength = parseFloat(localStorage.getItem(LENGTH_KEY));
-  if (!isNaN(savedLength) && savedLength > 0) {
-    TIMER_DURATION = savedLength * 60000;
-  }
-
-  if (!localStorage.getItem(STORAGE_KEY)) {
+editButton.addEventListener("click", () => {
+  const newMinutes = parseFloat(prompt("Enter new timer length (minutes):"));
+  if (!isNaN(newMinutes) && newMinutes > 0) {
+    TIMER_DURATION = newMinutes * 60000;
+    localStorage.setItem(LENGTH_KEY, newMinutes);
     startTimer();
-  } else {
-    renderTimer();
-    interval = setInterval(renderTimer, 1000);
   }
+});
 
-  /* ---------------- WORKOUT TRACKER ---------------- */
-  const container = document.getElementById("exerciseContainer");
+const savedLength = parseFloat(localStorage.getItem(LENGTH_KEY));
+if (!isNaN(savedLength) && savedLength > 0) {
+  TIMER_DURATION = savedLength * 60000;
+}
 
-  function createCheckboxRow() {
-    const wrapper = document.createElement("div");
-    wrapper.className = "checkboxes";
+if (!localStorage.getItem(STORAGE_KEY)) {
+  startTimer();
+} else {
+  renderTimer();
+  interval = setInterval(renderTimer, 1000);
+}
 
-    const first = document.createElement("input");
-    first.type = "checkbox";
-    wrapper.appendChild(first);
+/* WORKOUT TRACKER */
+const container = document.getElementById("exerciseContainer");
 
-    wrapper.addEventListener("change", () => {
-      const boxes = wrapper.querySelectorAll("input[type='checkbox']");
-      const last = boxes[boxes.length - 1];
-      if (last.checked) {
-        const newBox = document.createElement("input");
-        newBox.type = "checkbox";
-        wrapper.appendChild(newBox);
-      }
-    });
+function createCheckboxRow() {
+  const wrapper = document.createElement("div");
+  wrapper.className = "checkboxes";
 
-    return wrapper;
-  }
+  const first = document.createElement("input");
+  first.type = "checkbox";
+  wrapper.appendChild(first);
 
-  function createExerciseRow() {
-    const row = document.createElement("div");
-    row.className = "exercise-row";
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Exercise name...";
-
-    const setsLabel = document.createElement("div");
-    setsLabel.className = "sets-label";
-    setsLabel.textContent = "Sets:";
-
-    const checkboxWrapper = createCheckboxRow();
-
-    input.addEventListener("input", () => {
-      const rows = document.querySelectorAll(".exercise-row input[type='text']");
-      if (input === rows[rows.length - 1] && input.value.trim() !== "") {
-        createExerciseRow();
-      }
-    });
-
-    row.appendChild(input);
-    row.appendChild(setsLabel);
-    row.appendChild(checkboxWrapper);
-    container.appendChild(row);
-  }
-
-  createExerciseRow();
-
-  document.getElementById("doneBtn").addEventListener("click", () => {
-    const rows = document.querySelectorAll(".exercise-row");
-    let summaryText = "";
-
-    rows.forEach(row => {
-      const input = row.querySelector("input[type='text']");
-      const checkboxes = row.querySelectorAll("input[type='checkbox']");
-      const name = input.value.trim();
-
-      if (name !== "") {
-        let count = 0;
-        checkboxes.forEach(cb => { if (cb.checked) count++; });
-        summaryText += `Exercise: ${name}\nSets: ${count}\n\n`;
-      }
-    });
-
-    document.getElementById("summary").textContent = summaryText.trim();
+  wrapper.addEventListener("change", () => {
+    const boxes = wrapper.querySelectorAll("input[type='checkbox']");
+    const last = boxes[boxes.length - 1];
+    if (last.checked) {
+      const newBox = document.createElement("input");
+      newBox.type = "checkbox";
+      wrapper.appendChild(newBox);
+    }
   });
 
-  /* ---------------- COPY POPUP ---------------- */
-  document.getElementById("copyBtn").addEventListener("click", () => {
-    const text = document.getElementById("summary").textContent;
-    navigator.clipboard.writeText(text);
+  return wrapper;
+}
 
-    const toast = document.getElementById("toast");
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 1000);
+function createExerciseRow() {
+  const row = document.createElement("div");
+  row.className = "exercise-row";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Exercise name...";
+
+  const setsLabel = document.createElement("div");
+  setsLabel.className = "sets-label";
+  setsLabel.textContent = "Sets:";
+
+  const checkboxWrapper = createCheckboxRow();
+
+  input.addEventListener("input", () => {
+    const rows = document.querySelectorAll(".exercise-row input[type='text']");
+    if (input === rows[rows.length - 1] && input.value.trim() !== "") {
+      createExerciseRow();
+    }
   });
+
+  row.appendChild(input);
+  row.appendChild(setsLabel);
+  row.appendChild(checkboxWrapper);
+  container.appendChild(row);
+}
+
+createExerciseRow();
+
+/* SAVE WORKOUT HISTORY */
+document.getElementById("doneBtn").addEventListener("click", () => {
+  const rows = document.querySelectorAll(".exercise-row");
+  let summaryText = "";
+  const workout = {
+    timestamp: Date.now(),
+    exercises: []
+  };
+
+  rows.forEach(row => {
+    const input = row.querySelector("input[type='text']");
+    const checkboxes = row.querySelectorAll("input[type='checkbox']");
+    const name = input.value.trim();
+
+    if (name !== "") {
+      let count = 0;
+      checkboxes.forEach(cb => { if (cb.checked) count++; });
+
+      workout.exercises.push({ name, sets: count });
+      summaryText += `Exercise: ${name}\nSets: ${count}\n\n`;
+    }
+  });
+
+  document.getElementById("summary").textContent = summaryText.trim();
+
+  let history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+  history.push(workout);
+  localStorage.setItem("workout_history", JSON.stringify(history));
+});
+
+/* COPY POPUP */
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const text = document.getElementById("summary").textContent;
+  navigator.clipboard.writeText(text);
+
+  const toast = document.getElementById("toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1000);
+});
+
+/* NAVIGATION */
+const trackerScreen = document.getElementById("tracker-screen");
+const historyScreen = document.getElementById("history-screen");
+const historyList = document.getElementById("history-list");
+
+document.getElementById("open-history").addEventListener("click", () => {
+  trackerScreen.style.display = "none";
+  historyScreen.style.display = "block";
+  loadHistory();
+});
+
+document.getElementById("open-tracker").addEventListener("click", () => {
+  historyScreen.style.display = "none";
+  trackerScreen.style.display = "block";
+});
+
+/* RENDER HISTORY */
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+  historyList.innerHTML = "";
+
+  history.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "history-entry";
+
+    const date = new Date(entry.timestamp).toLocaleString();
+
+    let html = `<h3>${date}</h3>`;
+    entry.exercises.forEach(ex => {
+      html += `<div>${ex.name} — ${ex.sets} sets</div>`;
+    });
+
+    div.innerHTML = html;
+    historyList.appendChild(div);
+  });
+}
+
+/* HISTORY SUMMARY — COUNT SETS PER EXERCISE TYPE */
+document.getElementById("history-summary-btn").addEventListener("click", () => {
+  const history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+
+  // Build a dictionary of exercise → total sets
+  const totals = {};
+
+  history.forEach(workout => {
+    workout.exercises.forEach(ex => {
+      const name = ex.name.trim();
+      if (!totals[name]) totals[name] = 0;
+      totals[name] += ex.sets;
+    });
+  });
+
+  // Build summary text
+  let summary = "";
+  Object.keys(totals).forEach(name => {
+    summary += `${name} — ${totals[name]} sets\n`;
+  });
+
+  document.getElementById("history-summary").textContent = summary.trim();
+});
+
+
 </script>
 
 </body>
