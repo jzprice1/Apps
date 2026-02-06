@@ -71,6 +71,13 @@
     padding: 20px;
   }
 
+  #content h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 0;
+  }
+
   .exercise-row {
     margin-bottom: 20px;
   }
@@ -83,6 +90,12 @@
     color: #eee;
     border: 1px solid #444;
     border-radius: 6px;
+  }
+
+  .sets-label {
+    margin-top: 8px;
+    font-size: 1rem;
+    opacity: 0.8;
   }
 
   .checkboxes {
@@ -109,7 +122,7 @@
 
   #summary {
     white-space: pre-wrap;
-    margin-top: 20px;
+    margin-top: 10px;
     padding: 12px;
     border: 1px solid #444;
     background: #1a1a1a;
@@ -275,6 +288,10 @@
     input.type = "text";
     input.placeholder = "Exercise name...";
 
+    const setsLabel = document.createElement("div");
+    setsLabel.className = "sets-label";
+    setsLabel.textContent = "Sets:";
+
     const checkboxWrapper = createCheckboxRow();
 
     input.addEventListener("input", () => {
@@ -285,6 +302,7 @@
     });
 
     row.appendChild(input);
+    row.appendChild(setsLabel);
     row.appendChild(checkboxWrapper);
     container.appendChild(row);
   }
