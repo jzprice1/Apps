@@ -367,6 +367,103 @@ function createExerciseRow() {
 }
 
 createExerciseRow();
+/* SAVE WORKOUT HISTORY */
+document.getElementById("doneBtn").addEventListener("click", () => {
+  const rows = document.querySelectorAll(".exercise-row");
+  let summaryText = "";
+  const workout = {
+    timestamp: Date.now(),
+    exercises: []
+  };
+
+  rows.forEach(row => {
+    const input = row.querySelector("input[type='text']");
+    const checkboxes = row.querySelectorAll("input[type='checkbox']");
+    const name = input.value.trim();
+
+    if (name !== "") {
+      let count = 0;
+      checkboxes.forEach(cb => { if (cb.checked) count++; });
+
+      workout.exercises.push({ name, sets: count });
+      summaryText += `Exercise: ${name}\nSets: ${count}\n\n`;
+    }
+  });
+
+  document.getElementById("summary").textContent = summaryText.trim();
+
+  let history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+  history.push(workout);
+  localStorage.setItem("workout_history", JSON.stringify(history));
+});
+
+/* COPY POPUP */
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const text = document.getElementById("summary").textContent;
+  navigator.clipboard.writeText(text);
+
+  const toast = document.getElementById("toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1000);
+});
+
+/* NAVIGATION */
+const trackerScreen = document.getElementById("tracker-screen");
+const historyScreen = document.getElementById("history-screen");
+const historyList = document.getElementById("history-list");
+
+document.getElementById("open-history").addEventListener("click", () => {
+  trackerScreen.style.display = "none";
+  historyScreen.style.display = "block";
+  loadHistory();
+});
+
+document.getElementById("open-tracker").addEventListener("click", () => {
+  historyScreen.style.display = "none";
+  trackerScreen.style.display = "block";
+});
+
+/* RENDER HISTORY */
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+  historyList.innerHTML = "";
+
+  history.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "history-entry";
+
+    const date = new Date(entry.timestamp).toLocaleString();
+    let html = `<h3>${date}</h3>`;
+
+    entry.exercises.forEach(ex => {
+      html += `<div>${ex.name} — ${ex.sets} sets</div>`;
+    });
+
+    div.innerHTML = html;
+    historyList.appendChild(div);
+  });
+}
+
+/* HISTORY SUMMARY */
+document.getElementById("history-summary-btn").addEventListener("click", () => {
+  const history = JSON.parse(localStorage.getItem("workout_history") || "[]");
+  const totals = {};
+
+  history.forEach(workout => {
+    workout.exercises.forEach(ex => {
+      const name = ex.name.trim();
+      if (!totals[name]) totals[name] = 0;
+      totals[name] += ex.sets;
+    });
+  });
+
+  let summary = "";
+  Object.keys(totals).forEach(name => {
+    summary += `${name} — ${totals[name]} sets\n`;
+  });
+
+  document.getElementById("history-summary").textContent = summary.trim();
+});
 </script>
 
 </body>
