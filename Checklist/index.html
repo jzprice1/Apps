@@ -6,77 +6,57 @@
     <title>Daily Checklist</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
+            background: #ffffff;
+            color: #000000;
         }
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border-radius: 4px;
+            padding: 20px;
+            border: 1px solid #000000;
         }
         h1 {
             text-align: center;
-            color: #4a5568;
-            margin-bottom: 30px;
-            font-size: 2em;
+            color: #000000;
+            margin-bottom: 20px;
+            font-size: 1.6em;
         }
         .task-input {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
         input[type="text"] {
             flex: 1;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: border-color 0.2s;
+            padding: 8px;
+            border: 1px solid #000000;
+            border-radius: 2px;
+            font-size: 14px;
         }
         input[type="text"]:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #000000;
         }
         button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 8px 14px;
+            border: 1px solid #000000;
+            border-radius: 2px;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
+            background: #ffffff;
+            color: #000000;
         }
-        .add-btn {
-            background: #48bb78;
-            color: white;
-        }
-        .add-btn:hover {
-            background: #38a169;
-            transform: translateY(-1px);
-        }
-        .clear-btn {
-            background: #f56565;
-            color: white;
-            margin-left: 10px;
-        }
-        .clear-btn:hover {
-            background: #e53e3e;
+        button:hover {
+            background: #000000;
+            color: #ffffff;
         }
         .reset-btn {
-            background: #ed8936;
-            color: white;
             width: 100%;
-            margin-top: 20px;
-            padding: 15px;
-        }
-        .reset-btn:hover {
-            background: #dd6b20;
+            margin-top: 16px;
         }
         .task-list {
             list-style: none;
@@ -86,87 +66,55 @@
         .task-item {
             display: flex;
             align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: #f7fafc;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-            transition: all 0.2s;
-        }
-        .task-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 8px;
+            margin-bottom: 6px;
+            border: 1px solid #000000;
+            border-radius: 2px;
         }
         .task-item.completed {
             opacity: 0.7;
-            border-left-color: #48bb78;
-            background: #f0fff4;
         }
         .task-checkbox {
-            width: 20px;
-            height: 20px;
-            margin-right: 15px;
-            accent-color: #667eea;
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
         }
         .task-text {
             flex: 1;
-            font-size: 16px;
-            line-height: 1.4;
+            font-size: 14px;
         }
         .task-text.completed {
             text-decoration: line-through;
-            color: #718096;
         }
         .delete-btn {
-            background: #f56565;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 14px;
-            margin-left: 10px;
-        }
-        .delete-btn:hover {
-            background: #e53e3e;
-            transform: scale(1.1);
         }
         .stats {
             display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding: 15px;
-            background: #edf2f7;
-            border-radius: 12px;
-            font-weight: 600;
-            color: #4a5568;
-        }
-        .reset-notice {
-            background: #fef5e7;
-            border: 1px solid #f6ad55;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 20px;
+            justify-content: flex-end;
+            margin-top: 10px;
             font-size: 14px;
-            color: #744210;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📋 Daily Checklist</h1>
+        <h1>Daily Checklist</h1>
         
         <div class="task-input">
             <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
-            <button class="add-btn" onclick="addTask()">Add</button>
-            <button class="clear-btn" onclick="clearInput()">Clear</button>
+            <button onclick="addTask()">Add</button>
         </div>
 
         <ul class="task-list" id="taskList"></ul>
         
-        <div class="stats" id="stats">
+        <div class="stats">
             <span id="completedCount">0</span> / <span id="totalCount">0</span> completed
         </div>
         
@@ -175,41 +123,37 @@
 
     <script>
         const TASKS_KEY = 'dailyChecklistTasks';
-        const LAST_RESET_KEY = 'dailyChecklistLastReset';
-        const ENTER_KEY = 13;
+        const LAST_CHECK_TIME_KEY = 'dailyChecklistLastCheckTime';
 
         let tasks = [];
-        let editing = false;
 
-        // Load data on startup
+        function getMidnightTimestamp() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return now.getTime();
+        }
+
         function loadData() {
             const savedTasks = localStorage.getItem(TASKS_KEY);
-            const lastReset = localStorage.getItem(LAST_RESET_KEY);
-            const today = getTodayDate();
+            const lastCheckTime = localStorage.getItem(LAST_CHECK_TIME_KEY);
+            const midnightToday = getMidnightTimestamp();
             
             if (savedTasks) {
                 tasks = JSON.parse(savedTasks);
             }
             
-            // Reset checkboxes if new day
-            if (lastReset !== today) {
+            if (lastCheckTime && parseInt(lastCheckTime, 10) < midnightToday) {
                 resetCheckboxes();
-                localStorage.setItem(LAST_RESET_KEY, today);
             }
             
             renderTasks();
-        }
-
-        function getTodayDate() {
-            const now = new Date();
-            return now.toDateString();
         }
 
         function addTask() {
             const input = document.getElementById('taskInput');
             const text = input.value.trim();
             
-            if (text && !editing) {
+            if (text) {
                 tasks.push({ text, completed: false });
                 saveData();
                 input.value = '';
@@ -225,6 +169,11 @@
 
         function toggleTask(index) {
             tasks[index].completed = !tasks[index].completed;
+
+            if (tasks[index].completed) {
+                localStorage.setItem(LAST_CHECK_TIME_KEY, Date.now().toString());
+            }
+
             saveData();
             renderTasks();
         }
@@ -235,14 +184,15 @@
         }
 
         function resetDaily() {
-            if (confirm('Reset all checkboxes for today? Your task list will be preserved.')) {
+            const midnightToday = getMidnightTimestamp();
+            const lastCheckTime = localStorage.getItem(LAST_CHECK_TIME_KEY);
+
+            if (!lastCheckTime || parseInt(lastCheckTime, 10) < midnightToday) {
                 resetCheckboxes();
                 renderTasks();
+            } else {
+                alert('No reset needed – tasks were already checked today.');
             }
-        }
-
-        function clearInput() {
-            document.getElementById('taskInput').value = '';
         }
 
         function saveData() {
@@ -268,14 +218,12 @@
             document.getElementById('totalCount').textContent = totalCount;
         }
 
-        // Event listeners
         document.getElementById('taskInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addTask();
             }
         });
 
-        // Initialize
         loadData();
     </script>
 </body>
