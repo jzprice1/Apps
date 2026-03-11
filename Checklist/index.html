@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Checklist</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .task-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-btn {
+            background: #48bb78;
+            color: white;
+        }
+        .add-btn:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+        }
+        .clear-btn {
+            background: #f56565;
+            color: white;
+            margin-left: 10px;
+        }
+        .clear-btn:hover {
+            background: #e53e3e;
+        }
+        .reset-btn {
+            background: #ed8936;
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+        }
+        .reset-btn:hover {
+            background: #dd6b20;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s;
+        }
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .task-item.completed {
+            opacity: 0.7;
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            accent-color: #667eea;
+        }
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #718096;
+        }
+        .delete-btn {
+            background: #f56565;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .delete-btn:hover {
+            background: #e53e3e;
+            transform: scale(1.1);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .reset-notice {
+            background: #fef5e7;
+            border: 1px solid #f6ad55;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #744210;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Daily Checklist</h1>
+        
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
+            <button class="add-btn" onclick="addTask()">Add</button>
+            <button class="clear-btn" onclick="clearInput()">Clear</button>
+        </div>
+
+        <ul class="task-list" id="taskList"></ul>
+        
+        <div class="stats" id="stats">
+            <span id="completedCount">0</span> / <span id="totalCount">0</span> completed
+        </div>
+        
+        <button class="reset-btn" onclick="resetDaily()">Reset for New Day</button>
+    </div>
+
+    <script>
+        const TASKS_KEY = 'dailyChecklistTasks';
+        const LAST_RESET_KEY = 'dailyChecklistLastReset';
+        const ENTER_KEY = 13;
+
+        let tasks = [];
+        let editing = false;
+
+        // Load data on startup
+        function loadData() {
+            const savedTasks = localStorage.getItem(TASKS_KEY);
+            const lastReset = localStorage.getItem(LAST_RESET_KEY);
+            const today = getTodayDate();
+            
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+            }
+            
+            // Reset checkboxes if new day
+            if (lastReset !== today) {
+                resetCheckboxes();
+                localStorage.setItem(LAST_RESET_KEY, today);
+            }
+            
+            renderTasks();
+        }
+
+        function getTodayDate() {
+            const now = new Date();
+            return now.toDateString();
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            
+            if (text && !editing) {
+                tasks.push({ text, completed: false });
+                saveData();
+                input.value = '';
+                renderTasks();
+            }
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveData();
+            renderTasks();
+        }
+
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            saveData();
+            renderTasks();
+        }
+
+        function resetCheckboxes() {
+            tasks.forEach(task => task.completed = false);
+            saveData();
+        }
+
+        function resetDaily() {
+            if (confirm('Reset all checkboxes for today? Your task list will be preserved.')) {
+                resetCheckboxes();
+                renderTasks();
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('taskInput').value = '';
+        }
+
+        function saveData() {
+            localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const totalCount = tasks.length;
+            const completedCount = tasks.filter(t => t.completed).length;
+            
+            taskList.innerHTML = tasks.map((task, index) => `
+                <li class="task-item ${task.completed ? 'completed' : ''}">
+                    <input type="checkbox" class="task-checkbox" 
+                           ${task.completed ? 'checked' : ''} 
+                           onchange="toggleTask(${index})">
+                    <span class="task-text ${task.completed ? 'completed' : ''}">${task.text}</span>
+                    <button class="delete-btn" onclick="deleteTask(${index})" title="Delete task">×</button>
+                </li>
+            `).join('');
+            
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('totalCount').textContent = totalCount;
+        }
+
+        // Event listeners
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
