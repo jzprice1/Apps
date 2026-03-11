@@ -143,15 +143,6 @@
             font-weight: 600;
             color: #4a5568;
         }
-        .reset-notice {
-            background: #fef5e7;
-            border: 1px solid #f6ad55;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #744210;
-        }
     </style>
 </head>
 <body>
@@ -175,41 +166,38 @@
 
     <script>
         const TASKS_KEY = 'dailyChecklistTasks';
-        const LAST_RESET_KEY = 'dailyChecklistLastReset';
-        const ENTER_KEY = 13;
+        const LAST_CHECK_TIME_KEY = 'dailyChecklistLastCheckTime';
 
         let tasks = [];
-        let editing = false;
 
-        // Load data on startup
+        function getMidnightTimestamp() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // set to local midnight [web:2][web:8]
+            return now.getTime();     // store as ms timestamp [web:4][web:10]
+        }
+
         function loadData() {
             const savedTasks = localStorage.getItem(TASKS_KEY);
-            const lastReset = localStorage.getItem(LAST_RESET_KEY);
-            const today = getTodayDate();
+            const lastCheckTime = localStorage.getItem(LAST_CHECK_TIME_KEY);
+            const midnightToday = getMidnightTimestamp();
             
             if (savedTasks) {
                 tasks = JSON.parse(savedTasks);
             }
             
-            // Reset checkboxes if new day
-            if (lastReset !== today) {
+            // If last check was before today's midnight, it's a new day → reset
+            if (lastCheckTime && parseInt(lastCheckTime, 10) < midnightToday) {
                 resetCheckboxes();
-                localStorage.setItem(LAST_RESET_KEY, today);
             }
             
             renderTasks();
-        }
-
-        function getTodayDate() {
-            const now = new Date();
-            return now.toDateString();
         }
 
         function addTask() {
             const input = document.getElementById('taskInput');
             const text = input.value.trim();
             
-            if (text && !editing) {
+            if (text) {
                 tasks.push({ text, completed: false });
                 saveData();
                 input.value = '';
@@ -225,6 +213,12 @@
 
         function toggleTask(index) {
             tasks[index].completed = !tasks[index].completed;
+
+            // Record timestamp when a task is checked (this marks "activity today")
+            if (tasks[index].completed) {
+                localStorage.setItem(LAST_CHECK_TIME_KEY, Date.now().toString());
+            }
+
             saveData();
             renderTasks();
         }
@@ -235,9 +229,15 @@
         }
 
         function resetDaily() {
-            if (confirm('Reset all checkboxes for today? Your task list will be preserved.')) {
+            const midnightToday = getMidnightTimestamp();
+            const lastCheckTime = localStorage.getItem(LAST_CHECK_TIME_KEY);
+
+            // If never checked, or last check was before today's midnight, treat as new day
+            if (!lastCheckTime || parseInt(lastCheckTime, 10) < midnightToday) {
                 resetCheckboxes();
                 renderTasks();
+            } else {
+                alert('No reset needed – tasks were already checked today.');
             }
         }
 
@@ -268,14 +268,14 @@
             document.getElementById('totalCount').textContent = totalCount;
         }
 
-        // Event listeners
+        // Add with Enter key
         document.getElementById('taskInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 addTask();
             }
         });
 
-        // Initialize
+        // Initialize app
         loadData();
     </script>
 </body>
