@@ -320,6 +320,76 @@ padding: 4px 10px;
 font-size: 0.85rem;
 cursor: pointer;
 }
+.history-entry .edit-date {
+margin-top: 8px;
+margin-left: 8px;
+background: #2a2a2a;
+color: #88aaff;
+border: 1px solid #445;
+border-radius: 6px;
+padding: 4px 10px;
+font-size: 0.85rem;
+cursor: pointer;
+}
+
+/* DATE EDIT MODAL */
+#date-modal-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.75);
+z-index: 100;
+align-items: center;
+justify-content: center;
+}
+#date-modal-overlay.open {
+display: flex;
+}
+#date-modal {
+background: #1a1a1a;
+border: 1px solid #555;
+border-radius: 12px;
+padding: 24px 20px;
+width: 88vw;
+max-width: 360px;
+}
+#date-modal h3 {
+margin: 0 0 16px 0;
+font-size: 1.3rem;
+text-align: center;
+}
+#date-modal input[type=“datetime-local”] {
+width: 100%;
+padding: 10px;
+font-size: 1rem;
+background: #000;
+color: white;
+border: 1px solid #555;
+border-radius: 8px;
+box-sizing: border-box;
+margin-bottom: 16px;
+}
+#date-modal .date-modal-actions {
+display: flex;
+gap: 10px;
+}
+#date-modal .date-modal-actions button {
+flex: 1;
+padding: 12px;
+font-size: 1.1rem;
+border-radius: 8px;
+border: 1px solid #555;
+cursor: pointer;
+}
+#date-modal-cancel {
+background: #2a2a2a;
+color: #aaa;
+}
+#date-modal-save {
+background: #fff;
+color: #000;
+font-weight: bold;
+}
 
 /* TOAST */
 #toast {
@@ -558,6 +628,17 @@ font-weight: bold;
     <div class="timer-modal-actions">
       <button id="modal-cancel">Cancel</button>
       <button id="modal-set">Set Timer</button>
+    </div>
+  </div>
+</div>
+
+<div id="date-modal-overlay">
+  <div id="date-modal">
+    <h3>Edit Workout Date</h3>
+    <input type="datetime-local" id="date-modal-input" />
+    <div class="date-modal-actions">
+      <button id="date-modal-cancel">Cancel</button>
+      <button id="date-modal-save">Save</button>
     </div>
   </div>
 </div>
@@ -1250,12 +1331,54 @@ function loadHistory() {
       localStorage.setItem("workout_history", JSON.stringify(history));
       loadHistory();
     });
+
+    const editDateBtn = document.createElement("button");
+    editDateBtn.textContent = "📅 Edit Date";
+    editDateBtn.className = "edit-date";
+    editDateBtn.addEventListener("click", () => {
+      openDateModal(history, idx);
+    });
+
     div.appendChild(delBtn);
+    div.appendChild(editDateBtn);
     historyList.appendChild(div);
   });
 }
 
-/* --- CSV EDITOR --- */
+/* --- EDIT DATE MODAL --- */
+const dateModalOverlay = document.getElementById("date-modal-overlay");
+const dateModalInput   = document.getElementById("date-modal-input");
+let _dateEditHistory = null;
+let _dateEditIdx     = null;
+
+function openDateModal(history, idx) {
+  _dateEditHistory = history;
+  _dateEditIdx     = idx;
+  // Convert timestamp to local datetime-local value (YYYY-MM-DDTHH:mm)
+  const d = new Date(history[idx].timestamp);
+  const pad = n => String(n).padStart(2, "0");
+  const local = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  dateModalInput.value = local;
+  dateModalOverlay.classList.add("open");
+}
+
+document.getElementById("date-modal-cancel").addEventListener("click", () => {
+  dateModalOverlay.classList.remove("open");
+});
+
+dateModalOverlay.addEventListener("click", e => {
+  if (e.target === dateModalOverlay) dateModalOverlay.classList.remove("open");
+});
+
+document.getElementById("date-modal-save").addEventListener("click", () => {
+  if (_dateEditHistory === null || !dateModalInput.value) return;
+  const newTs = new Date(dateModalInput.value).getTime();
+  if (isNaN(newTs)) return;
+  _dateEditHistory[_dateEditIdx].timestamp = newTs;
+  localStorage.setItem("workout_history", JSON.stringify(_dateEditHistory));
+  dateModalOverlay.classList.remove("open");
+  loadHistory();
+});
 const csvEditor = document.getElementById("csv-editor");
 const csvText = document.getElementById("csvText");
 const toggleCsvEditor = document.getElementById("toggleCsvEditor");
