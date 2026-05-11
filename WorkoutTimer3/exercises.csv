@@ -2,53 +2,53 @@ group,	name
 BICEPS,	Dumbbell Curl
 BICEPS,	Barbell Curl
 BICEPS,	Hammer Curl
-BICEPS	Incline Dumbbell Curl
-BICEPS	Concentration Curl
-TRICEPS	Cable Pushdown
-TRICEPS	Overhead Cable Extension
-TRICEPS	Tricep Dips
-TRICEPS	Skull Crusher
-TRICEPS	Close-Grip Bench Press
-CHEST	Barbell Bench Press
-CHEST	Dumbbell Bench Press
-CHEST	Incline Barbell Press
-CHEST	Incline Dumbbell Press
-CHEST	Cable Fly
-CHEST	Pec Deck
-BACK	Barbell Row
-BACK	Dumbbell Row
-BACK	Lat Pulldown
-BACK	Seated Cable Row
-BACK	Pull-Up
-BACK	Chin-Up
-BACK	Face Pull
-BACK	T-Bar Row
-SHOULDERS	Overhead Press
-SHOULDERS	Dumbbell Shoulder Press
-SHOULDERS	Lateral Raise
-SHOULDERS	Front Raise
-SHOULDERS	Rear Delt Fly
-SHOULDERS	Arnold Press
-QUADS	Squat
-QUADS	Leg Press
-QUADS	Hack Squat
-QUADS	Leg Extension
-QUADS	Bulgarian Split Squat
-HAMSTRINGS	Romanian Deadlift
-HAMSTRINGS	Leg Curl
-HAMSTRINGS	Nordic Curl
-HAMSTRINGS	Stiff-Leg Deadlift
-GLUTES	Hip Thrust
-GLUTES	Cable Kickback
-GLUTES	Sumo Deadlift
-CALVES	Standing Calf Raise
-CALVES	Seated Calf Raise
-CALVES	Leg Press Calf Raise
-ABS	Plank
-ABS	Ab Wheel
-ABS	Cable Crunch
-ABS	Hanging Leg Raise
-ABS	Decline Sit-Up
-COMPOUND	Deadlift
-COMPOUND	Power Clean
-COMPOUND	Clean and Press
+BICEPS,	Incline Dumbbell Curl
+BICEPS,	Concentration Curl
+TRICEPS,	Cable Pushdown
+TRICEPS, Overhead Cable Extension
+TRICEPS,	Tricep Dips
+TRICEPS,	Skull Crusher
+TRICEPS,	Close-Grip Bench Press
+CHEST,	Barbell Bench Press
+CHEST,	Dumbbell Bench Press
+CHEST,	Incline Barbell Press
+CHEST,	Incline Dumbbell Press
+CHEST,	Cable Fly
+CHEST,	Pec Deck
+BACK,	Barbell Row
+BACK,	Dumbbell Row
+BACK,	Lat Pulldown
+BACK,	Seated Cable Row
+BACK,	Pull-Up
+BACK,	Chin-Up
+BACK,	Face Pull
+BACK,	T-Bar Row
+SHOULDERS,	Overhead Press
+SHOULDERS,	Dumbbell Shoulder Press
+SHOULDERS,	Lateral Raise
+SHOULDERS,	Front Raise
+SHOULDERS,	Rear Delt Fly
+SHOULDERS,	Arnold Press
+QUADS,	Squat
+QUADS,	Leg Press
+QUADS,	Hack Squat
+QUADS,	Leg Extension
+QUADS,	Bulgarian Split Squat
+HAMSTRINGS,	Romanian Deadlift
+HAMSTRINGS,	Leg Curl
+HAMSTRINGS,	Nordic Curl
+HAMSTRINGS,	Stiff-Leg Deadlift
+GLUTES,	Hip Thrust
+GLUTES,	Cable Kickback
+GLUTES,	Sumo Deadlift
+CALVES,	Standing Calf Raise
+CALVES,	Seated Calf Raise
+CALVES,	Leg Press Calf Raise
+ABS,	Plank
+ABS,	Ab Wheel
+ABS,	Cable Crunch
+ABS,	Hanging Leg Raise
+ABS,	Decline Sit-Up
+COMPOUND,	Deadlift
+COMPOUND,	Power Clean
+COMPOUND,	Clean and Press
