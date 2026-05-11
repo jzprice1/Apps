@@ -42,7 +42,7 @@ background: black;
 }
 
 #tracker-screen {
-height: calc(100vh - 70px);
+min-height: calc(100vh - 70px);
 overflow-y: auto;
 padding: 0 20px 20px;
 }
@@ -574,6 +574,10 @@ updateClock();
 setInterval(updateClock, 1000);
 
 /* --- DYNAMIC TIMER SPACING --- */
+// Only track genuine orientation/window-size changes, not virtual keyboard popups.
+// We do this by ignoring resize events that only change height (keyboard appearing).
+let lastWindowWidth = window.innerWidth;
+
 function applyTimerSpacing() {
   const topbar = document.getElementById("topbar");
   const timer  = document.getElementById("sticky-timer");
@@ -581,13 +585,20 @@ function applyTimerSpacing() {
   const topbarH = topbar.getBoundingClientRect().height;
   const timerH  = timer.getBoundingClientRect().height;
   const offset  = topbarH + timerH;
-  screen.style.marginTop  = offset + "px";
-  screen.style.height     = `calc(100vh - ${offset}px)`;
+  screen.style.marginTop = offset + "px";
+  // Don't constrain height — let the screen fill whatever space is left naturally.
+  // This avoids the virtual keyboard collapsing the layout on mobile.
+  screen.style.height = "";
 }
-// Run once the browser has laid everything out, then re-run on resize
-window.addEventListener("load",   applyTimerSpacing);
-window.addEventListener("resize", applyTimerSpacing);
-// Also run immediately in case load already fired (artifact sandbox)
+
+window.addEventListener("load", applyTimerSpacing);
+window.addEventListener("resize", () => {
+  // Only re-run if the width changed (real resize/rotation, not keyboard popup)
+  if (window.innerWidth !== lastWindowWidth) {
+    lastWindowWidth = window.innerWidth;
+    applyTimerSpacing();
+  }
+});
 applyTimerSpacing();
 
 /* --- TIMER --- */
