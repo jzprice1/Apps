@@ -15,6 +15,15 @@
     overflow: hidden;
   }
 
+#fixed-header {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+z-index: 20;
+background: black;
+}
+
 #topbar {
 display: flex;
 justify-content: space-between;
@@ -33,18 +42,14 @@ cursor: pointer;
 }
 
 #sticky-timer {
-position: fixed;
-top: 70px;
-left: 0;
-right: 0;
-z-index: 20;
 background: black;
 }
 
 #tracker-screen {
-min-height: calc(100vh - 70px);
 overflow-y: auto;
 padding: 0 20px 20px;
+height: 100vh;
+box-sizing: border-box;
 }
 
 #timer-container {
@@ -476,20 +481,24 @@ font-weight: bold;
 </head>
 <body>
 
-<div id="topbar">
-  <button id="open-history">📅</button>
-  <span id="clock-text"></span>
-  <button id="open-tracker">⏱️</button>
-</div>
+<div id="fixed-header">
 
-<div id="sticky-timer">
-  <div id="timer-container">
-    <div id="timer">2:00</div>
+  <div id="topbar">
+    <button id="open-history">📅</button>
+    <span id="clock-text"></span>
+    <button id="open-tracker">⏱️</button>
   </div>
-  <div id="timer-buttons">
-    <button id="reset">Reset Timer</button>
-    <button id="edit-timer">✏️ Edit</button>
+
+  <div id="sticky-timer">
+    <div id="timer-container">
+      <div id="timer">2:00</div>
+    </div>
+    <div id="timer-buttons">
+      <button id="reset">Reset Timer</button>
+      <button id="edit-timer">✏️ Edit</button>
+    </div>
   </div>
+
 </div>
 
 <div id="tracker-screen">
@@ -574,26 +583,20 @@ updateClock();
 setInterval(updateClock, 1000);
 
 /* --- DYNAMIC TIMER SPACING --- */
-// Only track genuine orientation/window-size changes, not virtual keyboard popups.
-// We do this by ignoring resize events that only change height (keyboard appearing).
 let lastWindowWidth = window.innerWidth;
 
 function applyTimerSpacing() {
-  const topbar = document.getElementById("topbar");
-  const timer  = document.getElementById("sticky-timer");
+  const header = document.getElementById("fixed-header");
   const screen = document.getElementById("tracker-screen");
-  const topbarH = topbar.getBoundingClientRect().height;
-  const timerH  = timer.getBoundingClientRect().height;
-  const offset  = topbarH + timerH;
-  screen.style.marginTop = offset + "px";
-  // Don't constrain height — let the screen fill whatever space is left naturally.
-  // This avoids the virtual keyboard collapsing the layout on mobile.
-  screen.style.height = "";
+  const historyScreen = document.getElementById("history-screen");
+  const headerH = header.getBoundingClientRect().height;
+  screen.style.marginTop = headerH + "px";
+  screen.style.paddingTop = "12px";
+  historyScreen.style.marginTop = headerH + "px";
 }
 
 window.addEventListener("load", applyTimerSpacing);
 window.addEventListener("resize", () => {
-  // Only re-run if the width changed (real resize/rotation, not keyboard popup)
   if (window.innerWidth !== lastWindowWidth) {
     lastWindowWidth = window.innerWidth;
     applyTimerSpacing();
@@ -1054,6 +1057,7 @@ document.getElementById("open-history").addEventListener("click", () => {
   trackerScreen.style.display = "none";
   stickyTimer.style.display = "none";
   historyScreen.style.display = "block";
+  applyTimerSpacing();
   loadHistory();
 });
 
@@ -1061,6 +1065,7 @@ document.getElementById("open-tracker").addEventListener("click", () => {
   historyScreen.style.display = "none";
   stickyTimer.style.display = "block";
   trackerScreen.style.display = "block";
+  applyTimerSpacing();
 });
 
 /* --- CALENDAR --- */
