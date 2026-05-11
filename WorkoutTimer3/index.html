@@ -909,6 +909,21 @@ function createExerciseRow() {
   weightRow.appendChild(weightInput);
   weightRow.appendChild(weightUnit);
 
+  // Preserve scroll position when keyboard appears/disappears on mobile
+  weightInput.addEventListener("focus", () => {
+    const screen = document.getElementById("tracker-screen");
+    screen._savedScroll = screen.scrollTop;
+  });
+  weightInput.addEventListener("blur", () => {
+    const screen = document.getElementById("tracker-screen");
+    if (screen._savedScroll !== undefined) {
+      // Wait one frame for the keyboard to dismiss and layout to settle
+      requestAnimationFrame(() => {
+        screen.scrollTop = screen._savedScroll;
+      });
+    }
+  });
+
   row.appendChild(select);
   row.appendChild(weightRow);
   row.appendChild(setsLabel);
