@@ -42,8 +42,7 @@ background: black;
 }
 
 #tracker-screen {
-margin-top: 180px;
-height: calc(100vh - 70px - 180px);
+height: calc(100vh - 70px);
 overflow-y: auto;
 padding: 0 20px 20px;
 }
@@ -109,6 +108,34 @@ color: #eee;
 margin-top: 8px;
 font-size: 1rem;
 opacity: 0.8;
+}
+
+.weight-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-top: 8px;
+}
+
+.weight-row label {
+font-size: 1rem;
+opacity: 0.8;
+white-space: nowrap;
+}
+
+.weight-input {
+width: 90px;
+padding: 6px 10px;
+font-size: 1rem;
+background: #222;
+color: #eee;
+border: 1px solid #444;
+border-radius: 6px;
+}
+
+.weight-unit {
+font-size: 0.9rem;
+color: #888;
 }
 
 .checkboxes {
@@ -455,21 +482,17 @@ font-weight: bold;
   <button id="open-tracker">⏱️</button>
 </div>
 
-<div id="tracker-screen">
-
-  <div id="sticky-timer">
-    <div id="timer-container">
-      <div id="timer">2:00</div>
-    </div>
-
-```
-<div id="timer-buttons">
-  <button id="reset">Reset Timer</button>
-  <button id="edit-timer">✏️ Edit</button>
-</div>
-```
-
+<div id="sticky-timer">
+  <div id="timer-container">
+    <div id="timer">2:00</div>
   </div>
+  <div id="timer-buttons">
+    <button id="reset">Reset Timer</button>
+    <button id="edit-timer">✏️ Edit</button>
+  </div>
+</div>
+
+<div id="tracker-screen">
 
   <div id="exerciseContainer"></div>
 
@@ -549,6 +572,23 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+/* --- DYNAMIC TIMER SPACING --- */
+function applyTimerSpacing() {
+  const topbar = document.getElementById("topbar");
+  const timer  = document.getElementById("sticky-timer");
+  const screen = document.getElementById("tracker-screen");
+  const topbarH = topbar.getBoundingClientRect().height;
+  const timerH  = timer.getBoundingClientRect().height;
+  const offset  = topbarH + timerH;
+  screen.style.marginTop  = offset + "px";
+  screen.style.height     = `calc(100vh - ${offset}px)`;
+}
+// Run once the browser has laid everything out, then re-run on resize
+window.addEventListener("load",   applyTimerSpacing);
+window.addEventListener("resize", applyTimerSpacing);
+// Also run immediately in case load already fired (artifact sandbox)
+applyTimerSpacing();
 
 /* --- TIMER --- */
 let TIMER_DURATION = 120000;
@@ -842,17 +882,43 @@ function createExerciseRow() {
 
   const checkboxWrapper = createCheckboxRow();
 
+  // Weight input row
+  const weightRow = document.createElement("div");
+  weightRow.className = "weight-row";
+  const weightLabel = document.createElement("label");
+  weightLabel.textContent = "Weight:";
+  const weightInput = document.createElement("input");
+  weightInput.type = "number";
+  weightInput.className = "weight-input";
+  weightInput.placeholder = "0";
+  weightInput.min = "0";
+  weightInput.step = "2.5";
+  const weightUnit = document.createElement("span");
+  weightUnit.className = "weight-unit";
+  weightUnit.textContent = "lbs";
+  weightRow.appendChild(weightLabel);
+  weightRow.appendChild(weightInput);
+  weightRow.appendChild(weightUnit);
+
   row.appendChild(select);
+  row.appendChild(weightRow);
   row.appendChild(setsLabel);
   row.appendChild(checkboxWrapper);
   container.appendChild(row);
 
-  // Attach behavior so picking an exercise creates the next row
+  // When exercise is selected, load last-used weight
   select.addEventListener("change", () => {
     const value = select.value;
+    if (value) {
+      const weights = JSON.parse(localStorage.getItem("exercise_weights") || "{}");
+      if (weights[value] !== undefined) {
+        weightInput.value = weights[value];
+      } else {
+        weightInput.value = "";
+      }
+    }
     const rows = document.querySelectorAll(".exercise-row");
     const lastRow = rows[rows.length - 1];
-
     if (value !== "" && row === lastRow) {
       createExerciseRow();
     }
@@ -891,11 +957,19 @@ document.getElementById("doneBtn").addEventListener("click", () => {
 
     const checkboxes = row.querySelectorAll("input[type='checkbox']");
     let count = 0;
-    checkboxes.forEach(cb => {
-      if (cb.checked) count++;
-    });
+    checkboxes.forEach(cb => { if (cb.checked) count++; });
 
-    workout.exercises.push({ name, sets: count });
+    const weightInput = row.querySelector(".weight-input");
+    const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
+
+    // Persist last-used weight for this exercise
+    if (weight > 0) {
+      const weights = JSON.parse(localStorage.getItem("exercise_weights") || "{}");
+      weights[name] = weight;
+      localStorage.setItem("exercise_weights", JSON.stringify(weights));
+    }
+
+    workout.exercises.push({ name, sets: count, weight });
   });
 
   let history = JSON.parse(localStorage.getItem("workout_history") || "[]");
@@ -914,7 +988,8 @@ function renderWorkoutSummary(workout) {
     wrapper.style.marginBottom = "8px";
 
     const text = document.createElement("span");
-    text.textContent = `Exercise: ${ex.name} — ${ex.sets} sets`;
+    const weightStr = ex.weight > 0 ? ` @ ${ex.weight}lbs` : "";
+    text.textContent = `Exercise: ${ex.name}${weightStr} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}`;
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️";
@@ -962,15 +1037,18 @@ document.getElementById("copyBtn").addEventListener("click", () => {
 const trackerScreen = document.getElementById("tracker-screen");
 const historyScreen = document.getElementById("history-screen");
 const historyList = document.getElementById("history-list");
+const stickyTimer = document.getElementById("sticky-timer");
 
 document.getElementById("open-history").addEventListener("click", () => {
   trackerScreen.style.display = "none";
+  stickyTimer.style.display = "none";
   historyScreen.style.display = "block";
   loadHistory();
 });
 
 document.getElementById("open-tracker").addEventListener("click", () => {
   historyScreen.style.display = "none";
+  stickyTimer.style.display = "block";
   trackerScreen.style.display = "block";
 });
 
@@ -1133,7 +1211,8 @@ function loadHistory() {
     entry.exercises.forEach(ex => {
       const line = document.createElement("div");
       line.className = "ex-line";
-      line.textContent = `${ex.name} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}`;
+      const weightStr = ex.weight > 0 ? ` @ ${ex.weight}lbs` : "";
+      line.textContent = `${ex.name}${weightStr} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}`;
       div.appendChild(line);
     });
 
