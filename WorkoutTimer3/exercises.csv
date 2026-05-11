@@ -1,7 +1,7 @@
-group	name
-BICEPS	Dumbbell Curl
-BICEPS	Barbell Curl
-BICEPS	Hammer Curl
+group,	name
+BICEPS,	Dumbbell Curl
+BICEPS,	Barbell Curl
+BICEPS,	Hammer Curl
 BICEPS	Incline Dumbbell Curl
 BICEPS	Concentration Curl
 TRICEPS	Cable Pushdown
