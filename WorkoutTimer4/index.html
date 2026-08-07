@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Workout + Timer</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  #fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: black;
+  }
+
+  #topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 2rem;
+    border-bottom: 1px solid #333;
+  }
+
+  #topbar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+  }
+
+  #sticky-timer {
+    background: black;
+  }
+
+  #tracker-screen {
+    overflow-y: auto;
+    padding: 0 20px 80px;
+  }
+
+  #timer-container {
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  #timer {
+    font-size: 4rem;
+  }
+
+  #timer-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 6px 12px 10px;
+  }
+
+  #timer-buttons button {
+    flex: 1;
+    padding: 10px;
+    font-size: 1.1rem;
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 8px;
+  }
+
+  #timer-buttons button:active {
+    background: #333;
+  }
+
+  #tracker-screen h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 20px;
+  }
+
+  .exercise-row {
+    margin-bottom: 20px;
+  }
+
+  .exercise-select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1rem;
+    background: #222;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 6px;
+    margin: 0 0 4px 0;
+  }
+
+  .exercise-select option {
+    background: #222;
+    color: #eee;
+  }
+
+  .sets-label {
+    margin-top: 8px;
+    font-size: 1rem;
+    opacity: 0.8;
+  }
+
+  .weight-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .weight-row label {
+    font-size: 1rem;
+    opacity: 0.8;
+    white-space: nowrap;
+  }
+
+  .weight-input {
+    width: 90px;
+    padding: 6px 10px;
+    font-size: 1rem;
+    background: #222;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 6px;
+  }
+
+  .weight-unit {
+    font-size: 0.9rem;
+    color: #888;
+  }
+
+  .checkboxes {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  button.action {
+    margin-top: 20px;
+    padding: 12px;
+    width: 100%;
+    font-size: 1.2rem;
+    background: #333;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 6px;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .action-row button.action {
+    width: auto;
+    flex: 1;
+    font-size: 1.05rem;
+  }
+
+  #summary {
+    white-space: pre-wrap;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    font-family: monospace;
+    border-radius: 6px;
+  }
+
+  /* HISTORY SCREEN */
+  #history-screen {
+    display: none;
+    overflow-y: auto;
+    padding: 16px 16px 80px;
+  }
+
+  /* CALENDAR */
+  #cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  #cal-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0 8px;
+    line-height: 1;
+  }
+  #cal-month-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  #cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .cal-dow {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #888;
+    padding-bottom: 4px;
+  }
+  .cal-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #ccc;
+    cursor: default;
+  }
+  .cal-day.today {
+    border: 1px solid #666;
+    color: white;
+  }
+  .cal-day.has-workout {
+    color: white;
+    font-weight: 600;
+  }
+  .cal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00e676;
+    margin-top: 2px;
+  }
+  .cal-day.empty {
+    background: none;
+  }
+
+  /* BAR CHART */
+  #chart-title, #log-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 10px 0;
+  }
+  #log-title { margin-top: 24px; }
+  #bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bar-label {
+    font-size: 0.82rem;
+    color: #ccc;
+    width: 130px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-track {
+    flex: 1;
+    height: 18px;
+    background: #1e1e1e;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: #00e676;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .bar-count {
+    font-size: 0.8rem;
+    color: #888;
+    width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* HISTORY ENTRIES */
+  .history-entry {
+    border: 1px solid #333;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #111;
+  }
+  .history-entry h3 {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+    color: #aaa;
+  }
+  .history-entry .ex-line {
+    font-size: 0.95rem;
+    color: #ddd;
+    padding: 2px 0;
+  }
+  .history-entry .del-workout {
+    margin-top: 8px;
+    background: #2a2a2a;
+    color: #888;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .history-entry .edit-date {
+    margin-top: 8px;
+    margin-left: 8px;
+    background: #2a2a2a;
+    color: #88aaff;
+    border: 1px solid #445;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  /* SHARED MODAL SHELL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open {
+    display: flex;
+  }
+  .modal-box {
+    background: #1a1a1a;
+    border: 1px solid #555;
+    border-radius: 12px;
+    padding: 24px 20px;
+    width: 88vw;
+    max-width: 380px;
+    max-height: 84vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  .modal-box h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.3rem;
+    text-align: center;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .modal-actions button {
+    flex: 1;
+    padding: 12px;
+    font-size: 1.05rem;
+    border-radius: 8px;
+    border: 1px solid #555;
+    cursor: pointer;
+    background: #2a2a2a;
+    color: #ddd;
+  }
+  .modal-actions button.primary {
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+  }
+  .modal-actions button.danger {
+    color: #ff8a80;
+    border-color: #663;
+  }
+  .modal-hint {
+    font-size: 0.82rem;
+    color: #777;
+    margin: 0 0 14px 0;
+    line-height: 1.4;
+  }
+  .modal-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 20px 0 16px;
+  }
+
+  /* DATE EDIT MODAL */
+  #date-modal input[type="datetime-local"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background: #000;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+  }
+
+  /* PRESET MODAL */
+  #preset-name-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  #preset-name-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+    font-size: 1rem;
+    background: #000;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+  #preset-save-btn {
+    padding: 10px 14px;
+    font-size: 1rem;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    border: 1px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .preset-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .preset-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .preset-info .pname {
+    font-size: 1rem;
+    color: #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preset-info .pcount {
+    font-size: 0.78rem;
+    color: #777;
+  }
+  .preset-item button {
+    background: #2a2a2a;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .preset-item button.pload {
+    color: #00e676;
+    border-color: #275;
+  }
+  .preset-empty {
+    color: #555;
+    font-size: 0.9rem;
+    padding: 10px 0;
+  }
+
+  /* DATA MODAL */
+  #data-stats {
+    font-size: 0.9rem;
+    color: #aaa;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  #data-textarea {
+    width: 100%;
+    min-height: 110px;
+    background: #000;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f0;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 200;
+    text-align: center;
+    max-width: 80vw;
+  }
+
+  #toast.show {
+    opacity: 1;
+  }
+
+  /* CSV EDITOR */
+  #csv-editor {
+    display: none;
+    margin-top: 20px;
+    padding: 12px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #111;
+  }
+
+  #csv-editor textarea {
+    width: 100%;
+    min-height: 180px;
+    background: #000;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+  }
+
+  #csv-editor .row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  #csv-editor .row button {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 6px;
+  }
+
+  /* TIMER MODAL */
+  .timer-presets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .timer-presets button {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 1.1rem;
+    background: #2a2a2a;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .timer-presets button:active,
+  .timer-presets button.selected {
+    background: #444;
+    border-color: white;
+  }
+  #custom-input-row {
+    display: none;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  #custom-input-row.visible {
+    display: flex;
+  }
+  #custom-input-row input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1.3rem;
+    text-align: center;
+    background: #000;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    width: 0;
+  }
+  #custom-input-row span {
+    font-size: 1.4rem;
+    color: #aaa;
+  }
+</style>
+
+</head>
+<body>
+
+<div id="fixed-header">
+
+  <div id="topbar">
+    <button id="open-history">📅</button>
+    <span id="clock-text"></span>
+    <button id="open-tracker">⏱️</button>
+  </div>
+
+  <div id="sticky-timer">
+    <div id="timer-container">
+      <div id="timer">2:00</div>
+    </div>
+    <div id="timer-buttons">
+      <button id="reset">Reset Timer</button>
+      <button id="edit-timer">✏️ Edit</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="tracker-screen">
+
+  <div id="exerciseContainer"></div>
+
+  <button id="doneBtn" class="action">Done</button>
+  <button id="copyBtn" class="action">Copy Summary</button>
+
+  <div class="action-row">
+    <button id="openPresets" class="action">📋 Presets</button>
+    <button id="openData" class="action">💾 Data</button>
+  </div>
+
+  <button id="toggleCsvEditor" class="action">Edit CSV</button>
+
+  <div id="csv-editor">
+    <textarea id="csvText"></textarea>
+    <div class="row">
+      <button id="reloadCsvBtn">Reload CSV</button>
+      <button id="saveCsvBtn">Save CSV</button>
+    </div>
+  </div>
+
+  <div id="summary"></div>
+</div>
+
+<div id="history-screen">
+
+  <!-- CALENDAR -->
+
+  <div id="cal-header">
+    <button id="cal-prev">&#8249;</button>
+    <span id="cal-month-label"></span>
+    <button id="cal-next">&#8250;</button>
+  </div>
+  <div id="cal-grid">
+    <div class="cal-dow">Su</div><div class="cal-dow">Mo</div><div class="cal-dow">Tu</div>
+    <div class="cal-dow">We</div><div class="cal-dow">Th</div><div class="cal-dow">Fr</div><div class="cal-dow">Sa</div>
+  </div>
+
+  <!-- BAR CHART -->
+
+  <h3 id="chart-title">Most Frequent Exercises</h3>
+  <div id="bar-chart"></div>
+
+  <!-- WORKOUT LOG -->
+
+  <h3 id="log-title">Workout Log</h3>
+  <div id="history-list"></div>
+
+</div>
+
+<div id="timer-modal-overlay" class="modal-overlay">
+  <div id="timer-modal" class="modal-box">
+    <h3>Set Rest Timer</h3>
+    <div class="timer-presets">
+      <button data-seconds="60">1:00</button>
+      <button data-seconds="90">1:30</button>
+      <button data-seconds="120">2:00</button>
+      <button id="custom-preset-btn">Custom</button>
+    </div>
+    <div id="custom-input-row">
+      <input id="custom-minutes" type="number" min="0" max="59" placeholder="mm" />
+      <span>:</span>
+      <input id="custom-seconds" type="number" min="0" max="59" placeholder="ss" />
+    </div>
+    <div class="modal-actions">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-set" class="primary">Set Timer</button>
+    </div>
+  </div>
+</div>
+
+<div id="date-modal-overlay" class="modal-overlay">
+  <div id="date-modal" class="modal-box">
+    <h3>Edit Workout Date</h3>
+    <input type="datetime-local" id="date-modal-input" />
+    <div class="modal-actions">
+      <button id="date-modal-cancel">Cancel</button>
+      <button id="date-modal-save" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="preset-modal-overlay" class="modal-overlay">
+  <div id="preset-modal" class="modal-box">
+    <h3>Workout Presets</h3>
+
+    <p class="modal-hint">Saves the exercises currently on screen as a named preset. Weights aren't stored — they fill in from your last-used values when you load it.</p>
+
+    <div id="preset-name-row">
+      <input id="preset-name-input" type="text" placeholder="Preset name" />
+      <button id="preset-save-btn">Save</button>
+    </div>
+
+    <hr class="modal-divider" />
+
+    <div id="preset-list"></div>
+
+    <div class="modal-actions" style="margin-top:16px;">
+      <button id="preset-modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="data-modal-overlay" class="modal-overlay">
+  <div id="data-modal" class="modal-box">
+    <h3>Backup &amp; Restore</h3>
+
+    <div id="data-stats"></div>
+
+    <div class="modal-actions">
+      <button id="data-download">⬇️ Download</button>
+      <button id="data-copy">📋 Copy</button>
+    </div>
+
+    <hr class="modal-divider" />
+
+    <p class="modal-hint">Paste a backup below (or load one from a file), then choose how to bring it in. Merge keeps what's already here; Replace wipes it first.</p>
+
+    <textarea id="data-textarea" placeholder="Paste backup JSON here..."></textarea>
+
+    <div class="modal-actions">
+      <button id="data-loadfile">📂 Load File</button>
+      <button id="data-merge" class="primary">Merge</button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="data-replace" class="danger">Replace All</button>
+    </div>
+
+    <hr class="modal-divider" />
+
+    <div class="modal-actions">
+      <button id="data-modal-close">Close</button>
+    </div>
+
+    <input type="file" id="data-file-input" accept=".json,application/json" style="display:none" />
+  </div>
+</div>
+
+<div id="toast">Copied!</div>
+
+<script>
+/* --- CLOCK --- */
+const clock = document.getElementById("clock-text");
+function updateClock() {
+  clock.textContent = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* --- TOAST --- */
+let _toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.remove("show"), 1600);
+}
+
+/* --- DYNAMIC TIMER SPACING --- */
+let lastWindowWidth = window.innerWidth;
+
+function applyTimerSpacing() {
+  const header = document.getElementById("fixed-header");
+  const screen = document.getElementById("tracker-screen");
+  const historyScreen = document.getElementById("history-screen");
+  const headerH = header.getBoundingClientRect().height;
+  screen.style.marginTop = headerH + "px";
+  screen.style.paddingTop = "12px";
+  historyScreen.style.marginTop = headerH + "px";
+}
+
+window.addEventListener("load", applyTimerSpacing);
+window.addEventListener("resize", () => {
+  if (window.innerWidth !== lastWindowWidth) {
+    lastWindowWidth = window.innerWidth;
+    applyTimerSpacing();
+  }
+});
+applyTimerSpacing();
+
+/* --- TIMER --- */
+let TIMER_DURATION = 120000;
+const STORAGE_KEY = "accurate_timer_start";
+const LENGTH_KEY = "timer_length_minutes";
+
+const timerDisplay = document.getElementById("timer");
+const resetButton = document.getElementById("reset");
+const editButton = document.getElementById("edit-timer");
+
+let interval;
+
+function getRemainingTime() {
+  const startTime = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+  if (!startTime) return 0;
+  const elapsed = Date.now() - startTime;
+  return Math.max(0, TIMER_DURATION - elapsed);
+}
+
+function renderTimer() {
+  const remainingMs = getRemainingTime();
+  const totalSeconds = Math.ceil(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  timerDisplay.textContent =
+    minutes + ":" + String(seconds).padStart(2, "0");
+
+  if (remainingMs <= 0) {
+    clearInterval(interval);
+    timerDisplay.textContent = "0:00";
+  }
+}
+
+function startTimer() {
+  clearInterval(interval);
+  localStorage.setItem(STORAGE_KEY, Date.now());
+  renderTimer();
+  interval = setInterval(renderTimer, 1000);
+}
+
+resetButton.addEventListener("click", startTimer);
+
+/* --- TIMER MODAL --- */
+const timerModalOverlay = document.getElementById("timer-modal-overlay");
+const customInputRow = document.getElementById("custom-input-row");
+const customMinutes = document.getElementById("custom-minutes");
+const customSeconds = document.getElementById("custom-seconds");
+const customPresetBtn = document.getElementById("custom-preset-btn");
+
+let selectedSeconds = null;
+
+function openTimerModal() {
+  selectedSeconds = null;
+  customInputRow.classList.remove("visible");
+  customPresetBtn.classList.remove("selected");
+  document.querySelectorAll(".timer-presets button[data-seconds]").forEach(b => b.classList.remove("selected"));
+  customMinutes.value = "";
+  customSeconds.value = "";
+  timerModalOverlay.classList.add("open");
+}
+
+editButton.addEventListener("click", openTimerModal);
+
+document.querySelectorAll(".timer-presets button[data-seconds]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".timer-presets button").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    selectedSeconds = parseInt(btn.dataset.seconds, 10);
+    customInputRow.classList.remove("visible");
+  });
+});
+
+customPresetBtn.addEventListener("click", () => {
+  document.querySelectorAll(".timer-presets button").forEach(b => b.classList.remove("selected"));
+  customPresetBtn.classList.add("selected");
+  selectedSeconds = null;
+  customInputRow.classList.add("visible");
+  customMinutes.focus();
+});
+
+document.getElementById("modal-cancel").addEventListener("click", () => {
+  timerModalOverlay.classList.remove("open");
+});
+
+timerModalOverlay.addEventListener("click", (e) => {
+  if (e.target === timerModalOverlay) timerModalOverlay.classList.remove("open");
+});
+
+document.getElementById("modal-set").addEventListener("click", () => {
+  let totalMs;
+  if (customInputRow.classList.contains("visible")) {
+    const m = parseInt(customMinutes.value, 10) || 0;
+    const s = parseInt(customSeconds.value, 10) || 0;
+    totalMs = (m * 60 + s) * 1000;
+  } else if (selectedSeconds !== null) {
+    totalMs = selectedSeconds * 1000;
+  } else {
+    return; // nothing selected
+  }
+  if (totalMs <= 0) return;
+  TIMER_DURATION = totalMs;
+  localStorage.setItem(LENGTH_KEY, totalMs / 60000);
+  timerModalOverlay.classList.remove("open");
+  startTimer();
+});
+
+const savedLength = parseFloat(localStorage.getItem(LENGTH_KEY));
+if (!isNaN(savedLength) && savedLength > 0) {
+  TIMER_DURATION = savedLength * 60000;
+}
+
+if (!localStorage.getItem(STORAGE_KEY)) {
+  startTimer();
+} else {
+  renderTimer();
+  interval = setInterval(renderTimer, 1000);
+}
+
+/* --- CSV LOADING (no sort!) --- */
+const container = document.getElementById("exerciseContainer");
+const CSV_URL = "exercises.csv";
+const CSV_KEY = "exercises_csv_text";
+const PRESETS_KEY = "workout_presets";
+const HISTORY_KEY = "workout_history";
+const WEIGHTS_KEY = "exercise_weights";
+
+// Default exercises used when no CSV is available (e.g. in sandbox/artifact)
+const DEFAULT_CSV = `group,name
+BICEPS,Dumbbell Curl
+BICEPS,Barbell Curl
+BICEPS,Hammer Curl
+BICEPS,Incline Dumbbell Curl
+BICEPS,Concentration Curl
+TRICEPS,Cable Pushdown
+TRICEPS,Overhead Cable Extension
+TRICEPS,Tricep Dips
+TRICEPS,Skull Crusher
+TRICEPS,Close-Grip Bench Press
+CHEST,Barbell Bench Press
+CHEST,Dumbbell Bench Press
+CHEST,Incline Barbell Press
+CHEST,Incline Dumbbell Press
+CHEST,Cable Fly
+CHEST,Pec Deck
+BACK,Barbell Row
+BACK,Dumbbell Row
+BACK,Lat Pulldown
+BACK,Seated Cable Row
+BACK,Pull-Up
+BACK,Chin-Up
+BACK,Face Pull
+BACK,T-Bar Row
+SHOULDERS,Overhead Press
+SHOULDERS,Dumbbell Shoulder Press
+SHOULDERS,Lateral Raise
+SHOULDERS,Front Raise
+SHOULDERS,Rear Delt Fly
+SHOULDERS,Arnold Press
+QUADS,Squat
+QUADS,Leg Press
+QUADS,Hack Squat
+QUADS,Leg Extension
+QUADS,Bulgarian Split Squat
+HAMSTRINGS,Romanian Deadlift
+HAMSTRINGS,Leg Curl
+HAMSTRINGS,Nordic Curl
+HAMSTRINGS,Stiff-Leg Deadlift
+GLUTES,Hip Thrust
+GLUTES,Cable Kickback
+GLUTES,Sumo Deadlift
+CALVES,Standing Calf Raise
+CALVES,Seated Calf Raise
+CALVES,Leg Press Calf Raise
+ABS,Plank
+ABS,Ab Wheel
+ABS,Cable Crunch
+ABS,Hanging Leg Raise
+ABS,Decline Sit-Up
+COMPOUND,Deadlift
+COMPOUND,Power Clean
+COMPOUND,Clean and Press`;
+
+// Parse CSV into grouped structure: [{group, names[]}]
+// Supports both "group,name" (grouped) and legacy "name" (flat) formats.
+function parseCSV(text) {
+  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim() !== "");
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split(",").map(s => s.trim().toLowerCase());
+  const nameIdx = headers.indexOf("name");
+  const groupIdx = headers.indexOf("group");
+
+  if (groupIdx === -1 || nameIdx === -1) {
+    // Legacy flat format — single group "Exercises"
+    const names = [];
+    for (let i = 1; i < lines.length; i++) {
+      const name = lines[i].split(",")[Math.max(nameIdx, 0)]?.trim();
+      if (name) names.push(name);
+    }
+    return [{ group: "Exercises", names }];
+  }
+
+  // Grouped format
+  const groupMap = new Map();
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",");
+    const group = (cols[groupIdx] || "").trim();
+    const name = (cols[nameIdx] || "").trim();
+    if (!group || !name) continue;
+    if (!groupMap.has(group)) groupMap.set(group, []);
+    groupMap.get(group).push(name);
+  }
+  return Array.from(groupMap.entries()).map(([group, names]) => ({ group, names }));
+}
+
+async function loadCsvText() {
+  const local = localStorage.getItem(CSV_KEY);
+  if (local) return local;
+
+  try {
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("CSV load failed");
+    return await res.text();
+  } catch (e) {
+    // Fall back to default list when running without a server
+    return DEFAULT_CSV;
+  }
+}
+
+// Cache the parsed list so preset loading can populate many rows without
+// re-fetching, and so a programmatic select.value assignment lands on
+// options that already exist.
+let cachedGroups = null;
+
+async function getGroupedExercises() {
+  if (cachedGroups) return cachedGroups;
+  try {
+    const text = await loadCsvText();
+    cachedGroups = parseCSV(text);
+  } catch (e) {
+    console.warn(e);
+    cachedGroups = [];
+  }
+  return cachedGroups;
+}
+
+function invalidateGroupCache() {
+  cachedGroups = null;
+}
+
+/* --- WORKOUT ROWS (CSV-only) --- */
+function createCheckboxRow() {
+  const wrapper = document.createElement("div");
+  wrapper.className = "checkboxes";
+
+  const first = document.createElement("input");
+  first.type = "checkbox";
+  wrapper.appendChild(first);
+
+  wrapper.addEventListener("change", () => {
+    const boxes = wrapper.querySelectorAll("input[type='checkbox']");
+    if (boxes[boxes.length - 1].checked) {
+      const newBox = document.createElement("input");
+      newBox.type = "checkbox";
+      wrapper.appendChild(newBox);
+    }
+  });
+
+  return wrapper;
+}
+
+function applyLastWeight(name, weightInput) {
+  const weights = JSON.parse(localStorage.getItem(WEIGHTS_KEY) || "{}");
+  weightInput.value = weights[name] !== undefined ? weights[name] : "";
+}
+
+// presetName (optional) pre-selects an exercise on this row.
+function createExerciseRow(presetName) {
+  const row = document.createElement("div");
+  row.className = "exercise-row";
+
+  const select = document.createElement("select");
+  select.className = "exercise-select";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select exercise...";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  const setsLabel = document.createElement("div");
+  setsLabel.className = "sets-label";
+  setsLabel.textContent = "Sets:";
+
+  const checkboxWrapper = createCheckboxRow();
+
+  // Weight input row
+  const weightRow = document.createElement("div");
+  weightRow.className = "weight-row";
+  const weightLabel = document.createElement("label");
+  weightLabel.textContent = "Weight:";
+  const weightInput = document.createElement("input");
+  weightInput.type = "number";
+  weightInput.className = "weight-input";
+  weightInput.placeholder = "0";
+  weightInput.min = "0";
+  weightInput.step = "2.5";
+  const weightUnit = document.createElement("span");
+  weightUnit.className = "weight-unit";
+  weightUnit.textContent = "lbs";
+  weightRow.appendChild(weightLabel);
+  weightRow.appendChild(weightInput);
+  weightRow.appendChild(weightUnit);
+
+  // Populate options from CSV with optgroups
+  (async () => {
+    const groups = await getGroupedExercises();
+    groups.forEach(({ group, names }) => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = group;
+      names.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        optgroup.appendChild(opt);
+      });
+      select.appendChild(optgroup);
+    });
+
+    if (presetName) {
+      select.value = presetName;
+      // Preset refers to an exercise no longer in the CSV — keep it anyway
+      // so an old preset doesn't silently drop a row.
+      if (select.value !== presetName) {
+        const orphan = document.createElement("option");
+        orphan.value = presetName;
+        orphan.textContent = presetName + " (not in list)";
+        select.appendChild(orphan);
+        select.value = presetName;
+      }
+      applyLastWeight(presetName, weightInput);
+    }
+  })();
+
+  // Preserve scroll position when keyboard appears/disappears on mobile
+  weightInput.addEventListener("focus", () => {
+    const screen = document.getElementById("tracker-screen");
+    screen._savedScroll = screen.scrollTop;
+  });
+  weightInput.addEventListener("blur", () => {
+    const screen = document.getElementById("tracker-screen");
+    if (screen._savedScroll !== undefined) {
+      // Wait one frame for the keyboard to dismiss and layout to settle
+      requestAnimationFrame(() => {
+        screen.scrollTop = screen._savedScroll;
+      });
+    }
+  });
+
+  row.appendChild(select);
+  row.appendChild(weightRow);
+  row.appendChild(setsLabel);
+  row.appendChild(checkboxWrapper);
+  container.appendChild(row);
+
+  // When exercise is selected, load last-used weight
+  select.addEventListener("change", () => {
+    const value = select.value;
+    if (value) applyLastWeight(value, weightInput);
+    const rows = document.querySelectorAll(".exercise-row");
+    const lastRow = rows[rows.length - 1];
+    if (value !== "" && row === lastRow) {
+      createExerciseRow();
+    }
+  });
+
+  return row;
+}
+
+async function rebuildExerciseUI() {
+  container.innerHTML = "";
+  await getGroupedExercises();
+  createExerciseRow();
+}
+
+rebuildExerciseUI();
+
+/* --- GET NAME FROM ROW --- */
+function getRowName(row) {
+  const select = row.querySelector("select");
+  if (select && select.value) {
+    return select.value === "" ? "" : select.value.trim();
+  }
+  return "";
+}
+
+function getCurrentExerciseNames() {
+  const names = [];
+  document.querySelectorAll(".exercise-row").forEach(row => {
+    const n = getRowName(row);
+    if (n) names.push(n);
+  });
+  return names;
+}
+
+/* --- PRESETS --- */
+function getPresets() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PRESETS_KEY) || "{}");
+    return (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function savePresets(presets) {
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+}
+
+const presetModalOverlay = document.getElementById("preset-modal-overlay");
+const presetNameInput = document.getElementById("preset-name-input");
+const presetList = document.getElementById("preset-list");
+
+function renderPresetList() {
+  const presets = getPresets();
+  const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+  presetList.innerHTML = "";
+
+  if (names.length === 0) {
+    presetList.innerHTML = '<div class="preset-empty">No presets saved yet.</div>';
+    return;
+  }
+
+  names.forEach(name => {
+    const item = document.createElement("div");
+    item.className = "preset-item";
+
+    const info = document.createElement("div");
+    info.className = "preset-info";
+    const pname = document.createElement("div");
+    pname.className = "pname";
+    pname.textContent = name;
+    const pcount = document.createElement("div");
+    pcount.className = "pcount";
+    const n = presets[name].length;
+    pcount.textContent = `${n} exercise${n !== 1 ? "s" : ""}`;
+    info.appendChild(pname);
+    info.appendChild(pcount);
+
+    const loadBtn = document.createElement("button");
+    loadBtn.className = "pload";
+    loadBtn.textContent = "Load";
+    loadBtn.addEventListener("click", async () => {
+      if (getCurrentExerciseNames().length > 0 &&
+          !confirm("Replace the exercises currently on screen?")) return;
+      await loadPreset(presets[name]);
+      presetModalOverlay.classList.remove("open");
+      showToast(`Loaded "${name}"`);
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️";
+    delBtn.addEventListener("click", () => {
+      if (!confirm(`Delete preset "${name}"?`)) return;
+      const p = getPresets();
+      delete p[name];
+      savePresets(p);
+      renderPresetList();
+    });
+
+    item.appendChild(info);
+    item.appendChild(loadBtn);
+    item.appendChild(delBtn);
+    presetList.appendChild(item);
+  });
+}
+
+async function loadPreset(names) {
+  container.innerHTML = "";
+  await getGroupedExercises(); // warm cache so value assignment lands
+  names.forEach(n => createExerciseRow(n));
+  createExerciseRow(); // trailing blank row
+  document.getElementById("summary").innerHTML = "";
+  applyTimerSpacing();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.getElementById("openPresets").addEventListener("click", () => {
+  presetNameInput.value = "";
+  renderPresetList();
+  presetModalOverlay.classList.add("open");
+});
+
+document.getElementById("preset-save-btn").addEventListener("click", () => {
+  const name = presetNameInput.value.trim();
+  if (!name) {
+    showToast("Name the preset first");
+    return;
+  }
+  const names = getCurrentExerciseNames();
+  if (names.length === 0) {
+    showToast("No exercises selected");
+    return;
+  }
+  const presets = getPresets();
+  if (presets[name] && !confirm(`Overwrite preset "${name}"?`)) return;
+  presets[name] = names;
+  savePresets(presets);
+  presetNameInput.value = "";
+  renderPresetList();
+  showToast(`Saved "${name}"`);
+});
+
+document.getElementById("preset-modal-close").addEventListener("click", () => {
+  presetModalOverlay.classList.remove("open");
+});
+
+presetModalOverlay.addEventListener("click", e => {
+  if (e.target === presetModalOverlay) presetModalOverlay.classList.remove("open");
+});
+
+/* --- BACKUP / RESTORE --- */
+const BACKUP_KEYS = [CSV_KEY, PRESETS_KEY, HISTORY_KEY, WEIGHTS_KEY, LENGTH_KEY];
+const dataModalOverlay = document.getElementById("data-modal-overlay");
+const dataTextarea = document.getElementById("data-textarea");
+const dataFileInput = document.getElementById("data-file-input");
+
+function buildBackup() {
+  const data = {};
+  BACKUP_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) data[k] = v;
+  });
+  return {
+    app: "workout-tracker",
+    version: 1,
+    exported: new Date().toISOString(),
+    data
+  };
+}
+
+function backupJSON() {
+  return JSON.stringify(buildBackup(), null, 2);
+}
+
+function renderDataStats() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  const weights = JSON.parse(localStorage.getItem(WEIGHTS_KEY) || "{}");
+  const presets = getPresets();
+  const oldest = history.length
+    ? new Date(Math.min(...history.map(h => h.timestamp))).toLocaleDateString()
+    : "—";
+  document.getElementById("data-stats").innerHTML =
+    `<div>${history.length} workout${history.length !== 1 ? "s" : ""} logged (since ${oldest})</div>` +
+    `<div>${Object.keys(weights).length} remembered weights</div>` +
+    `<div>${Object.keys(presets).length} preset${Object.keys(presets).length !== 1 ? "s" : ""}</div>`;
+}
+
+document.getElementById("openData").addEventListener("click", () => {
+  dataTextarea.value = "";
+  renderDataStats();
+  dataModalOverlay.classList.add("open");
+});
+
+document.getElementById("data-modal-close").addEventListener("click", () => {
+  dataModalOverlay.classList.remove("open");
+});
+
+dataModalOverlay.addEventListener("click", e => {
+  if (e.target === dataModalOverlay) dataModalOverlay.classList.remove("open");
+});
+
+document.getElementById("data-download").addEventListener("click", () => {
+  const blob = new Blob([backupJSON()], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  a.href = url;
+  a.download = `workout-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast("Backup downloaded");
+});
+
+document.getElementById("data-copy").addEventListener("click", async () => {
+  const json = backupJSON();
+  try {
+    await navigator.clipboard.writeText(json);
+    showToast("Backup copied");
+  } catch (e) {
+    // Clipboard blocked — drop it in the textarea so it can be copied by hand
+    dataTextarea.value = json;
+    showToast("Copy from the box below");
+  }
+});
+
+document.getElementById("data-loadfile").addEventListener("click", () => {
+  dataFileInput.click();
+});
+
+dataFileInput.addEventListener("change", () => {
+  const file = dataFileInput.files && dataFileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    dataTextarea.value = reader.result;
+    showToast("File loaded — now Merge or Replace");
+  };
+  reader.onerror = () => showToast("Couldn't read that file");
+  reader.readAsText(file);
+  dataFileInput.value = "";
+});
+
+function parseBackup() {
+  const raw = dataTextarea.value.trim();
+  if (!raw) {
+    showToast("Nothing to import");
+    return null;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    showToast("That isn't valid JSON");
+    return null;
+  }
+  const data = parsed && parsed.data ? parsed.data : parsed;
+  if (!data || typeof data !== "object") {
+    showToast("Unrecognized backup format");
+    return null;
+  }
+  return data;
+}
+
+function safeParse(str, fallback) {
+  try {
+    const v = JSON.parse(str);
+    return v === null || v === undefined ? fallback : v;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+document.getElementById("data-merge").addEventListener("click", async () => {
+  const data = parseBackup();
+  if (!data) return;
+
+  // History: union by timestamp, oldest first
+  const existing = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  const incoming = safeParse(data[HISTORY_KEY], []);
+  const byTs = new Map();
+  existing.concat(Array.isArray(incoming) ? incoming : [])
+    .forEach(w => { if (w && w.timestamp) byTs.set(w.timestamp, w); });
+  const merged = Array.from(byTs.values()).sort((a, b) => a.timestamp - b.timestamp);
+  const added = merged.length - existing.length;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(merged));
+
+  // Weights and presets: incoming wins on a key collision
+  const weights = Object.assign(
+    JSON.parse(localStorage.getItem(WEIGHTS_KEY) || "{}"),
+    safeParse(data[WEIGHTS_KEY], {})
+  );
+  localStorage.setItem(WEIGHTS_KEY, JSON.stringify(weights));
+
+  const presets = Object.assign(getPresets(), safeParse(data[PRESETS_KEY], {}));
+  savePresets(presets);
+
+  // Exercise list: only adopt it if this browser doesn't already have one
+  if (data[CSV_KEY] && !localStorage.getItem(CSV_KEY)) {
+    localStorage.setItem(CSV_KEY, data[CSV_KEY]);
+    invalidateGroupCache();
+    await rebuildExerciseUI();
+  }
+
+  renderDataStats();
+  dataTextarea.value = "";
+  showToast(`Merged — ${added} new workout${added !== 1 ? "s" : ""}`);
+});
+
+document.getElementById("data-replace").addEventListener("click", async () => {
+  const data = parseBackup();
+  if (!data) return;
+  if (!confirm("This erases all workouts, weights, and presets in this browser and replaces them with the backup. Continue?")) return;
+
+  BACKUP_KEYS.forEach(k => localStorage.removeItem(k));
+  BACKUP_KEYS.forEach(k => {
+    if (data[k] !== undefined && data[k] !== null) {
+      localStorage.setItem(k, typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]));
+    }
+  });
+
+  const len = parseFloat(localStorage.getItem(LENGTH_KEY));
+  if (!isNaN(len) && len > 0) TIMER_DURATION = len * 60000;
+
+  invalidateGroupCache();
+  await rebuildExerciseUI();
+  renderDataStats();
+  dataTextarea.value = "";
+  showToast("Data replaced");
+});
+
+/* --- SAVE WORKOUT HISTORY --- */
+document.getElementById("doneBtn").addEventListener("click", () => {
+  const rows = document.querySelectorAll(".exercise-row");
+  const workout = {
+    timestamp: Date.now(),
+    exercises: []
+  };
+
+  rows.forEach(row => {
+    const name = getRowName(row);
+    if (!name) return;
+
+    const checkboxes = row.querySelectorAll("input[type='checkbox']");
+    let count = 0;
+    checkboxes.forEach(cb => { if (cb.checked) count++; });
+
+    const weightInput = row.querySelector(".weight-input");
+    const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
+
+    // Persist last-used weight for this exercise
+    if (weight > 0) {
+      const weights = JSON.parse(localStorage.getItem(WEIGHTS_KEY) || "{}");
+      weights[name] = weight;
+      localStorage.setItem(WEIGHTS_KEY, JSON.stringify(weights));
+    }
+
+    workout.exercises.push({ name, sets: count, weight });
+  });
+
+  let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  history.push(workout);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+
+  renderWorkoutSummary(workout);
+});
+
+function renderWorkoutSummary(workout) {
+  const summaryDiv = document.getElementById("summary");
+  summaryDiv.innerHTML = "";
+
+  workout.exercises.forEach((ex, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.marginBottom = "8px";
+
+    const text = document.createElement("span");
+    const weightStr = ex.weight > 0 ? ` @ ${ex.weight}lbs` : "";
+    text.textContent = `Exercise: ${ex.name}${weightStr} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}`;
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️";
+    delBtn.style.marginLeft = "8px";
+    delBtn.style.fontSize = "0.9rem";
+    delBtn.style.background = "#444";
+    delBtn.style.color = "white";
+    delBtn.style.border = "1px solid #666";
+    delBtn.style.borderRadius = "4px";
+    delBtn.style.padding = "2px 6px";
+
+    delBtn.addEventListener("click", () => {
+      workout.exercises.splice(idx, 1);
+
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      const current = history.find(h => h.timestamp === workout.timestamp);
+      if (current) {
+        current.exercises = workout.exercises;
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
+
+      renderWorkoutSummary(workout);
+    });
+
+    wrapper.appendChild(text);
+    wrapper.appendChild(delBtn);
+    summaryDiv.appendChild(wrapper);
+  });
+}
+
+/* --- COPY POPUP --- */
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const text = Array.from(document.getElementById("summary").children)
+    .map(child => child.querySelector("span")?.textContent || "")
+    .join("\n");
+
+  navigator.clipboard.writeText(text);
+  showToast("Copied!");
+});
+
+/* --- NAVIGATION --- */
+const trackerScreen = document.getElementById("tracker-screen");
+const historyScreen = document.getElementById("history-screen");
+const historyList = document.getElementById("history-list");
+const stickyTimer = document.getElementById("sticky-timer");
+
+document.getElementById("open-history").addEventListener("click", () => {
+  trackerScreen.style.display = "none";
+  stickyTimer.style.display = "none";
+  historyScreen.style.display = "block";
+  applyTimerSpacing();
+  loadHistory();
+});
+
+document.getElementById("open-tracker").addEventListener("click", () => {
+  historyScreen.style.display = "none";
+  stickyTimer.style.display = "block";
+  trackerScreen.style.display = "block";
+  applyTimerSpacing();
+});
+
+/* --- CALENDAR --- */
+let calYear, calMonth;
+(function initCalDate() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+})();
+
+function getWorkoutDates() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  const dates = new Set();
+  history.forEach(w => {
+    const d = new Date(w.timestamp);
+    dates.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+  });
+  return dates;
+}
+
+function renderCalendar() {
+  const workoutDates = getWorkoutDates();
+  const now = new Date();
+  const label = new Date(calYear, calMonth, 1).toLocaleString("default", { month: "long", year: "numeric" });
+  document.getElementById("cal-month-label").textContent = label;
+
+  // Remove old day cells (keep the 7 DOW headers)
+  const grid = document.getElementById("cal-grid");
+  const existing = grid.querySelectorAll(".cal-day, .cal-empty");
+  existing.forEach(el => el.remove());
+
+  const firstDow = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDow; i++) {
+    const blank = document.createElement("div");
+    blank.className = "cal-day empty";
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${calYear}-${calMonth}-${d}`;
+    const cell = document.createElement("div");
+    cell.className = "cal-day";
+
+    const numSpan = document.createElement("span");
+    numSpan.textContent = d;
+    cell.appendChild(numSpan);
+
+    if (workoutDates.has(key)) {
+      cell.classList.add("has-workout");
+      const dot = document.createElement("div");
+      dot.className = "cal-dot";
+      cell.appendChild(dot);
+    }
+
+    if (d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear()) {
+      cell.classList.add("today");
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+document.getElementById("cal-prev").addEventListener("click", () => {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+});
+document.getElementById("cal-next").addEventListener("click", () => {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+});
+
+/* --- BAR CHART --- */
+function renderBarChart() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  const totals = {};
+  history.forEach(workout => {
+    workout.exercises.forEach(ex => {
+      const name = ex.name.trim();
+      if (!totals[name]) totals[name] = 0;
+      totals[name] += ex.sets;
+    });
+  });
+
+  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const maxVal = sorted.length ? sorted[0][1] : 1;
+  const chart = document.getElementById("bar-chart");
+  chart.innerHTML = "";
+
+  if (sorted.length === 0) {
+    chart.innerHTML = '<div style="color:#555;font-size:0.9rem;">No workouts logged yet.</div>';
+    return;
+  }
+
+  sorted.forEach(([name, count]) => {
+    const row = document.createElement("div");
+    row.className = "bar-row";
+
+    const label = document.createElement("div");
+    label.className = "bar-label";
+    label.textContent = name;
+    label.title = name;
+
+    const track = document.createElement("div");
+    track.className = "bar-track";
+
+    const fill = document.createElement("div");
+    fill.className = "bar-fill";
+    fill.style.width = "0%";
+    track.appendChild(fill);
+
+    const countEl = document.createElement("div");
+    countEl.className = "bar-count";
+    countEl.textContent = count;
+
+    row.appendChild(label);
+    row.appendChild(track);
+    row.appendChild(countEl);
+    chart.appendChild(row);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      fill.style.width = `${(count / maxVal) * 100}%`;
+    });
+  });
+}
+
+/* --- WORKOUT LOG --- */
+function loadHistory() {
+  renderCalendar();
+  renderBarChart();
+
+  let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  historyList.innerHTML = "";
+
+  if (history.length === 0) {
+    historyList.innerHTML = '<div style="color:#555;font-size:0.9rem;">No workouts logged yet.</div>';
+    return;
+  }
+
+  // Show most recent first
+  [...history].reverse().forEach((entry, revIdx) => {
+    const idx = history.length - 1 - revIdx;
+    const div = document.createElement("div");
+    div.className = "history-entry";
+
+    const date = new Date(entry.timestamp).toLocaleString([], {
+      weekday: "short", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+    const h3 = document.createElement("h3");
+    h3.textContent = date;
+    div.appendChild(h3);
+
+    entry.exercises.forEach(ex => {
+      const line = document.createElement("div");
+      line.className = "ex-line";
+      const weightStr = ex.weight > 0 ? ` @ ${ex.weight}lbs` : "";
+      line.textContent = `${ex.name}${weightStr} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}`;
+      div.appendChild(line);
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️ Delete";
+    delBtn.className = "del-workout";
+    delBtn.addEventListener("click", () => {
+      history.splice(idx, 1);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      loadHistory();
+    });
+
+    const editDateBtn = document.createElement("button");
+    editDateBtn.textContent = "📅 Edit Date";
+    editDateBtn.className = "edit-date";
+    editDateBtn.addEventListener("click", () => {
+      openDateModal(history, idx);
+    });
+
+    div.appendChild(delBtn);
+    div.appendChild(editDateBtn);
+    historyList.appendChild(div);
+  });
+}
+
+/* --- EDIT DATE MODAL --- */
+const dateModalOverlay = document.getElementById("date-modal-overlay");
+const dateModalInput   = document.getElementById("date-modal-input");
+let _dateEditHistory = null;
+let _dateEditIdx     = null;
+
+function openDateModal(history, idx) {
+  _dateEditHistory = history;
+  _dateEditIdx     = idx;
+  // Convert timestamp to local datetime-local value (YYYY-MM-DDTHH:mm)
+  const d = new Date(history[idx].timestamp);
+  const pad = n => String(n).padStart(2, "0");
+  const local = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  dateModalInput.value = local;
+  dateModalOverlay.classList.add("open");
+}
+
+document.getElementById("date-modal-cancel").addEventListener("click", () => {
+  dateModalOverlay.classList.remove("open");
+});
+
+dateModalOverlay.addEventListener("click", e => {
+  if (e.target === dateModalOverlay) dateModalOverlay.classList.remove("open");
+});
+
+document.getElementById("date-modal-save").addEventListener("click", () => {
+  if (_dateEditHistory === null || !dateModalInput.value) return;
+  const newTs = new Date(dateModalInput.value).getTime();
+  if (isNaN(newTs)) return;
+  _dateEditHistory[_dateEditIdx].timestamp = newTs;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(_dateEditHistory));
+  dateModalOverlay.classList.remove("open");
+  loadHistory();
+});
+
+/* --- CSV EDITOR --- */
+const csvEditor = document.getElementById("csv-editor");
+const csvText = document.getElementById("csvText");
+const toggleCsvEditor = document.getElementById("toggleCsvEditor");
+const saveCsvBtn = document.getElementById("saveCsvBtn");
+const reloadCsvBtn = document.getElementById("reloadCsvBtn");
+
+toggleCsvEditor.addEventListener("click", async () => {
+  csvEditor.style.display = csvEditor.style.display === "none" ? "block" : "none";
+  if (csvEditor.style.display === "block") {
+    csvText.value = localStorage.getItem(CSV_KEY) || await loadCsvText();
+  }
+});
+
+saveCsvBtn.addEventListener("click", async () => {
+  localStorage.setItem(CSV_KEY, csvText.value);
+  invalidateGroupCache();
+  await rebuildExerciseUI();
+});
+
+reloadCsvBtn.addEventListener("click", async () => {
+  localStorage.removeItem(CSV_KEY);
+  invalidateGroupCache();
+  csvText.value = await loadCsvText();
+  await rebuildExerciseUI();
+});
+</script>
+
+</body>
+</html>
