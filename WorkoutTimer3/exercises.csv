@@ -1,203 +1,156 @@
-group,	name
-CHEST,	Barbell Bench Press
-CHEST,	Dumbbell Bench Press
-CHEST,	Incline Dumbbell Press
-CHEST,	Incline Barbell Press
-CHEST,	Cable Fly
-CHEST,	Smith Machine Bench Press
-CHEST,	Low-to-High Cable Fly
-CHEST,	High-to-Low Cable Fly
-CHEST,	Dumbbell Fly
-CHEST,	Smith Machine Incline Press
-CHEST,	Decline Dumbbell Press
-CHEST,	Push-Up
-CHEST,	Weighted Push-Up
-CHEST,	Dumbbell Floor Press
-CHEST,	Dumbbell Pullover
-CHEST,	Standing Cable Press
-CHEST,	Single-Arm Cable Fly
-CHEST,	Svend Press
-CHEST,	Medicine Ball Chest Pass
-CHEST,	Plyo Push-Up
-BACK,	Pull-Up
-BACK,	Lat Pulldown
-BACK,	Seated Cable Row
-BACK,	Dumbbell Row
-BACK,	Barbell Row
-BACK,	Chin-Up
-BACK,	Face Pull
-BACK,	T-Bar Row
-BACK,	Chest-Supported Dumbbell Row
-BACK,	Single-Arm Cable Row
-BACK,	Straight-Arm Cable Pulldown
-BACK,	Neutral-Grip Pull-Up
-BACK,	Wide-Grip Pull-Up
-BACK,	Single-Arm Lat Pulldown
-BACK,	Pendlay Row
-BACK,	Reverse-Grip Barbell Row
-BACK,	Smith Machine Row
-BACK,	Inverted Row
-BACK,	Kettlebell Row
-BACK,	Meadows Row
-BACK,	Rack Pull
-BACK,	Cable Pullover
-BACK,	Back Extension
-BACK,	Weighted Pull-Up
-SHOULDERS,	Dumbbell Shoulder Press
-SHOULDERS,	Lateral Raise
-SHOULDERS,	Overhead Press
-SHOULDERS,	Rear Delt Fly
-SHOULDERS,	Cable Lateral Raise
-SHOULDERS,	Arnold Press
-SHOULDERS,	Front Raise
-SHOULDERS,	Barbell Shrug
-SHOULDERS,	Dumbbell Shrug
-SHOULDERS,	Smith Machine Shoulder Press
-SHOULDERS,	Reverse Cable Fly
-SHOULDERS	Upright Row
-SHOULDERS	Push Press
-SHOULDERS	Kettlebell Overhead Press
-SHOULDERS	Plate Front Raise
-SHOULDERS	Landmine Press
-SHOULDERS	Seated Barbell Press
-SHOULDERS	Z Press
-SHOULDERS	Bradford Press
-SHOULDERS	Bottoms-Up Kettlebell Press
-SHOULDERS	Cable Front Raise
-BICEPS	Dumbbell Curl
-BICEPS	Hammer Curl
-BICEPS	Barbell Curl
-BICEPS	Cable Curl
-BICEPS	Incline Dumbbell Curl
-BICEPS	Preacher Curl
-BICEPS	Concentration Curl
-BICEPS	Cable Hammer Curl
-BICEPS	Spider Curl
-BICEPS	Bayesian Cable Curl
-BICEPS	Reverse Curl
-BICEPS	Cross-Body Hammer Curl
-BICEPS	Zottman Curl
-BICEPS	Drag Curl
-BICEPS	Barbell 21s
-BICEPS	Kettlebell Curl
-TRICEPS	Cable Pushdown
-TRICEPS	Overhead Cable Extension
-TRICEPS	Skull Crusher
-TRICEPS	Close-Grip Bench Press
-TRICEPS	Dumbbell Overhead Extension
-TRICEPS	Tricep Dips
-TRICEPS	Rope Pushdown
-TRICEPS	Straight-Bar Pushdown
-TRICEPS	Single-Arm Cable Pushdown
-TRICEPS	Cable Kickback
-TRICEPS	Bench Dip
-TRICEPS	Smith Machine Close-Grip Press
-TRICEPS	JM Press
-TRICEPS	Tate Press
-TRICEPS	Diamond Push-Up
-TRICEPS	Dumbbell Kickback
-QUADS	Squat
-QUADS	Leg Extension
-QUADS	Bulgarian Split Squat
-QUADS	Front Squat
-QUADS	Goblet Squat
-QUADS	Smith Machine Squat
-QUADS	Walking Lunge
-QUADS	Reverse Lunge
-QUADS	Smith Machine Hack Squat
-QUADS	Step-Up
-QUADS	Heels-Elevated Squat
-QUADS	Split Squat
-QUADS	Pause Squat
-QUADS	Box Squat
-QUADS	Zercher Squat
-QUADS	Sissy Squat
-QUADS	Pistol Squat
-QUADS	Wall Sit
-QUADS	Dumbbell Lunge
-QUADS	Kettlebell Front Squat
-HAMSTRINGS	Romanian Deadlift
-HAMSTRINGS	Leg Curl
-HAMSTRINGS	Stiff-Leg Deadlift
-HAMSTRINGS	Dumbbell Romanian Deadlift
-HAMSTRINGS	Single-Leg Romanian Deadlift
-HAMSTRINGS	Nordic Curl
-HAMSTRINGS	Good Morning
-HAMSTRINGS	Cable Pull-Through
-HAMSTRINGS	Glute-Ham Raise
-HAMSTRINGS	Smith Machine Romanian Deadlift
-HAMSTRINGS	Kettlebell Swing
-HAMSTRINGS	Hamstring-Focused Back Extension
-GLUTES	Hip Thrust
-GLUTES	Cable Kickback
-GLUTES	Sumo Deadlift
-GLUTES	Glute Bridge
-GLUTES	Smith Machine Hip Thrust
-GLUTES	Single-Leg Hip Thrust
-GLUTES	Cable Pull-Through
-GLUTES	High Step-Up
-GLUTES	Curtsy Lunge
-GLUTES	Deficit Reverse Lunge
-GLUTES	Frog Pump
-GLUTES	Cable Abduction
-CALVES	Standing Calf Raise
-CALVES	Smith Machine Calf Raise
-CALVES	Seated Calf Raise
-CALVES	Single-Leg Calf Raise
-CALVES	Dumbbell Calf Raise
-CALVES	Donkey Calf Raise
-CALVES	Jump Rope Calf Bounce
-CALVES	Tiptoe Farmer's Walk
-ABS	Plank
-ABS	Hanging Leg Raise
-ABS	Cable Crunch
-ABS	Ab Wheel
-ABS	Decline Sit-Up
-ABS	Hanging Knee Raise
-ABS	Russian Twist
-ABS	Cable Woodchop
-ABS	Pallof Press
-ABS	Medicine Ball Slam
-ABS	Side Plank
-ABS	Weighted Crunch
-ABS	Bicycle Crunch
-ABS	V-Up
-ABS	Dead Bug
-ABS	Toes-to-Bar
-ABS	Barbell Rollout
-ABS	Landmine Twist
-ABS	Suitcase Carry
-ABS	Medicine Ball Russian Twist
-FOREARMS	Wrist Curl
-FOREARMS	Reverse Wrist Curl
-FOREARMS	Farmer's Carry
-FOREARMS	Dead Hang
-FOREARMS	Plate Pinch Hold
-FOREARMS	Behind-the-Back Barbell Wrist Curl
-COMPOUND	Deadlift
-COMPOUND	Kettlebell Swing
-COMPOUND	Power Clean
-COMPOUND	Clean and Press
-COMPOUND	Thruster
-COMPOUND	Farmer's Carry
-COMPOUND	Push Press
-COMPOUND	Rack Pull
-COMPOUND	Dumbbell Snatch
-COMPOUND	Kettlebell Clean and Press
-COMPOUND	Turkish Get-Up
-COMPOUND	Clean and Jerk
-COMPOUND	Front Rack Carry
-COMPOUND	Man Maker
-COMPOUND	Burpee
-CARDIO	Peloton Ride
-CARDIO	Rowing Machine
-CARDIO	Treadmill Run
-CARDIO	Treadmill Incline Walk
-CARDIO	Jump Rope
-CARDIO	Treadmill Sprint Intervals
-CARDIO	Rowing Intervals
-CARDIO	Peloton Climb Ride
-CARDIO	Peloton Intervals
-CARDIO	Jump Rope Double Unders
-CARDIO	Medicine Ball Slam Circuit
-CARDIO	Kettlebell Swing Intervals
+group,name
+CHEST,Barbell Bench Press
+CHEST,Dumbbell Bench Press
+CHEST,Incline Dumbbell Press
+CHEST,Incline Barbell Press
+CHEST,Cable Fly
+CHEST,Smith Machine Bench Press
+CHEST,Low-to-High Cable Fly
+CHEST,High-to-Low Cable Fly
+CHEST,Dumbbell Fly
+CHEST,Smith Machine Incline Press
+CHEST,Decline Dumbbell Press
+CHEST,Push-Up
+CHEST,Weighted Push-Up
+CHEST,Dumbbell Floor Press
+CHEST,Dumbbell Pullover
+CHEST,Standing Cable Press
+CHEST,Single-Arm Cable Fly
+CHEST,Svend Press
+CHEST,Medicine Ball Chest Pass
+CHEST,Plyo Push-Up
+BACK,Pull-Up
+BACK,Lat Pulldown
+BACK,Seated Cable Row
+BACK,Dumbbell Row
+BACK,Barbell Row
+BACK,Chin-Up
+BACK,Face Pull
+BACK,T-Bar Row
+BACK,Chest-Supported Dumbbell Row
+BACK,Single-Arm Cable Row
+BACK,Straight-Arm Cable Pulldown
+BACK,Neutral-Grip Pull-Up
+BACK,Wide-Grip Pull-Up
+BACK,Single-Arm Lat Pulldown
+BACK,Pendlay Row
+BACK,Reverse-Grip Barbell Row
+BACK,Smith Machine Row
+BACK,Inverted Row
+BACK,Kettlebell Row
+BACK,Meadows Row
+BACK,Rack Pull
+BACK,Cable Pullover
+BACK,Back Extension
+BACK,Weighted Pull-Up
+SHOULDERS,Dumbbell Shoulder Press
+SHOULDERS,Lateral Raise
+SHOULDERS,Overhead Press
+SHOULDERS,Rear Delt Fly
+SHOULDERS,Cable Lateral Raise
+SHOULDERS,Arnold Press
+SHOULDERS,Front Raise
+SHOULDERS,Barbell Shrug
+SHOULDERS,Dumbbell Shrug
+SHOULDERS,Smith Machine Shoulder Press
+SHOULDERS,Reverse Cable Fly
+SHOULDERS,Upright Row
+SHOULDERS,Push Press
+SHOULDERS,Kettlebell Overhead Press
+SHOULDERS,Plate Front Raise
+SHOULDERS,Landmine Press
+SHOULDERS,Seated Barbell Press
+SHOULDERS,Z Press
+SHOULDERS,Bradford Press
+SHOULDERS,Bottoms-Up Kettlebell Press
+SHOULDERS,Cable Front Raise
+BICEPS,Dumbbell Curl
+BICEPS,Hammer Curl
+BICEPS,Barbell Curl
+BICEPS,Cable Curl
+BICEPS,Incline Dumbbell Curl
+BICEPS,Preacher Curl
+BICEPS,Concentration Curl
+BICEPS,Cable Hammer Curl
+BICEPS,Spider Curl
+BICEPS,Bayesian Cable Curl
+BICEPS,Reverse Curl
+BICEPS,Cross-Body Hammer Curl
+BICEPS,Zottman Curl
+BICEPS,Drag Curl
+BICEPS,Barbell 21s
+BICEPS,Kettlebell Curl
+TRICEPS,Cable Pushdown
+TRICEPS,Overhead Cable Extension
+TRICEPS,Skull Crusher
+TRICEPS,Close-Grip Bench Press
+TRICEPS,Dumbbell Overhead Extension
+TRICEPS,Tricep Dips
+TRICEPS,Rope Pushdown
+TRICEPS,Straight-Bar Pushdown
+TRICEPS,Single-Arm Cable Pushdown
+TRICEPS,Cable Kickback
+TRICEPS,Bench Dip
+TRICEPS,Smith Machine Close-Grip Press
+TRICEPS,JM Press
+TRICEPS,Tate Press
+TRICEPS,Diamond Push-Up
+TRICEPS,Dumbbell Kickback
+QUADS,Squat
+QUADS,Leg Extension
+QUADS,Bulgarian Split Squat
+QUADS,Front Squat
+QUADS,Goblet Squat
+QUADS,Smith Machine Squat
+QUADS,Walking Lunge
+QUADS,Reverse Lunge
+QUADS,Smith Machine Hack Squat
+QUADS,Step-Up
+QUADS,Heels-Elevated Squat
+QUADS,Split Squat
+QUADS,Pause Squat
+QUADS,Box Squat
+QUADS,Zercher Squat
+QUADS,Sissy Squat
+QUADS,Pistol Squat
+QUADS,Wall Sit
+QUADS,Dumbbell Lunge
+QUADS,Kettlebell Front Squat
+HAMSTRINGS,Romanian Deadlift
+HAMSTRINGS,Leg Curl
+HAMSTRINGS,Stiff-Leg Deadlift
+HAMSTRINGS,Dumbbell Romanian Deadlift
+HAMSTRINGS,Single-Leg Romanian Deadlift
+HAMSTRINGS,Nordic Curl
+HAMSTRINGS,Good Morning
+HAMSTRINGS,Cable Pull-Through
+HAMSTRINGS,Glute-Ham Raise
+HAMSTRINGS,Smith Machine Romanian Deadlift
+HAMSTRINGS,Kettlebell Swing
+HAMSTRINGS,Hamstring-Focused Back Extension
+GLUTES,Hip Thrust
+GLUTES,Cable Kickback
+GLUTES,Sumo Deadlift
+GLUTES,Glute Bridge
+GLUTES,Smith Machine Hip Thrust
+GLUTES,Single-Leg Hip Thrust
+GLUTES,Cable Pull-Through
+GLUTES,High Step-Up
+GLUTES,Curtsy Lunge
+GLUTES,Deficit Reverse Lunge
+GLUTES,Frog Pump
+GLUTES,Cable Abduction
+CALVES,Standing Calf Raise
+CALVES,Smith Machine Calf Raise
+CALVES,Seated Calf Raise
+CALVES,Single-Leg Calf Raise
+CALVES,Dumbbell Calf Raise
+CALVES,Donkey Calf Raise
+CALVES,Jump Rope Calf Bounce
+CALVES,Tiptoe Farmer's Walk
+ABS,Plank
+ABS,Hanging Leg Raise
+ABS,Cable Crunch
+ABS,Ab Wheel
+ABS,Decline Sit-Up
+ABS,Hanging Knee Raise
