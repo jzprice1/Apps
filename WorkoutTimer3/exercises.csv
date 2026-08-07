@@ -1,59 +1,59 @@
-group	name
-CHEST	Barbell Bench Press
-CHEST	Dumbbell Bench Press
-CHEST	Incline Dumbbell Press
-CHEST	Incline Barbell Press
-CHEST	Cable Fly
-CHEST	Smith Machine Bench Press
-CHEST	Low-to-High Cable Fly
-CHEST	High-to-Low Cable Fly
-CHEST	Dumbbell Fly
-CHEST	Smith Machine Incline Press
-CHEST	Decline Dumbbell Press
-CHEST	Push-Up
-CHEST	Weighted Push-Up
-CHEST	Dumbbell Floor Press
-CHEST	Dumbbell Pullover
-CHEST	Standing Cable Press
-CHEST	Single-Arm Cable Fly
-CHEST	Svend Press
-CHEST	Medicine Ball Chest Pass
-CHEST	Plyo Push-Up
-BACK	Pull-Up
-BACK	Lat Pulldown
-BACK	Seated Cable Row
-BACK	Dumbbell Row
-BACK	Barbell Row
-BACK	Chin-Up
-BACK	Face Pull
-BACK	T-Bar Row
-BACK	Chest-Supported Dumbbell Row
-BACK	Single-Arm Cable Row
-BACK	Straight-Arm Cable Pulldown
-BACK	Neutral-Grip Pull-Up
-BACK	Wide-Grip Pull-Up
-BACK	Single-Arm Lat Pulldown
-BACK	Pendlay Row
-BACK	Reverse-Grip Barbell Row
-BACK	Smith Machine Row
-BACK	Inverted Row
-BACK	Kettlebell Row
-BACK	Meadows Row
-BACK	Rack Pull
-BACK	Cable Pullover
-BACK	Back Extension
-BACK	Weighted Pull-Up
-SHOULDERS	Dumbbell Shoulder Press
-SHOULDERS	Lateral Raise
-SHOULDERS	Overhead Press
-SHOULDERS	Rear Delt Fly
-SHOULDERS	Cable Lateral Raise
-SHOULDERS	Arnold Press
-SHOULDERS	Front Raise
-SHOULDERS	Barbell Shrug
-SHOULDERS	Dumbbell Shrug
-SHOULDERS	Smith Machine Shoulder Press
-SHOULDERS	Reverse Cable Fly
+group,	name
+CHEST,	Barbell Bench Press
+CHEST,	Dumbbell Bench Press
+CHEST,	Incline Dumbbell Press
+CHEST,	Incline Barbell Press
+CHEST,	Cable Fly
+CHEST,	Smith Machine Bench Press
+CHEST,	Low-to-High Cable Fly
+CHEST,	High-to-Low Cable Fly
+CHEST,	Dumbbell Fly
+CHEST,	Smith Machine Incline Press
+CHEST,	Decline Dumbbell Press
+CHEST,	Push-Up
+CHEST,	Weighted Push-Up
+CHEST,	Dumbbell Floor Press
+CHEST,	Dumbbell Pullover
+CHEST,	Standing Cable Press
+CHEST,	Single-Arm Cable Fly
+CHEST,	Svend Press
+CHEST,	Medicine Ball Chest Pass
+CHEST,	Plyo Push-Up
+BACK,	Pull-Up
+BACK,	Lat Pulldown
+BACK,	Seated Cable Row
+BACK,	Dumbbell Row
+BACK,	Barbell Row
+BACK,	Chin-Up
+BACK,	Face Pull
+BACK,	T-Bar Row
+BACK,	Chest-Supported Dumbbell Row
+BACK,	Single-Arm Cable Row
+BACK,	Straight-Arm Cable Pulldown
+BACK,	Neutral-Grip Pull-Up
+BACK,	Wide-Grip Pull-Up
+BACK,	Single-Arm Lat Pulldown
+BACK,	Pendlay Row
+BACK,	Reverse-Grip Barbell Row
+BACK,	Smith Machine Row
+BACK,	Inverted Row
+BACK,	Kettlebell Row
+BACK,	Meadows Row
+BACK,	Rack Pull
+BACK,	Cable Pullover
+BACK,	Back Extension
+BACK,	Weighted Pull-Up
+SHOULDERS,	Dumbbell Shoulder Press
+SHOULDERS,	Lateral Raise
+SHOULDERS,	Overhead Press
+SHOULDERS,	Rear Delt Fly
+SHOULDERS,	Cable Lateral Raise
+SHOULDERS,	Arnold Press
+SHOULDERS,	Front Raise
+SHOULDERS,	Barbell Shrug
+SHOULDERS,	Dumbbell Shrug
+SHOULDERS,	Smith Machine Shoulder Press
+SHOULDERS,	Reverse Cable Fly
 SHOULDERS	Upright Row
 SHOULDERS	Push Press
 SHOULDERS	Kettlebell Overhead Press
