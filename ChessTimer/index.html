@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Round Table — a chess clock for 2 to 8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@300;500;700&family=Archivo:wght@500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ground:#0A2129;
+    --ground-2:#0F3039;
+    --seat:#17414D;
+    --seat-line:#22596A;
+    --jade:#2FBF87;
+    --jade-lo:#1E8A61;
+    --jade-glow:rgba(47,191,135,.35);
+    --brass:#D9A441;
+    --rust:#C8553D;
+    --bone:#F1EDE3;
+    --mute:#7FA0A9;
+    --pass:.55s cubic-bezier(.65,.02,.25,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(120% 90% at 50% 0%, #10394400 0%, #06171D 100%),
+      var(--ground);
+    color:var(--bone);
+    font-family:'Archivo',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  .screen{position:fixed;inset:0;display:none;flex-direction:column}
+  .screen.on{display:flex}
+
+  /* ---------- shared bits ---------- */
+  .eyebrow{
+    font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--mute);
+  }
+  .wordmark{
+    font-family:'Martian Mono',ui-monospace,monospace;
+    font-weight:700;letter-spacing:.02em;
+  }
+
+  /* ---------- menu ---------- */
+  #menu{overflow-y:auto;padding:clamp(20px,5vh,44px) 20px calc(28px + env(safe-area-inset-bottom));align-items:center}
+  .menu-inner{width:100%;max-width:520px;margin:auto;display:flex;flex-direction:column;gap:clamp(18px,3.4vh,30px)}
+  .title{font-size:clamp(30px,8vw,46px);line-height:1;letter-spacing:-.01em}
+  .title span{color:var(--jade)}
+  .lede{color:var(--mute);font-size:15px;max-width:34ch;margin-top:10px;line-height:1.45}
+
+  .field{border-top:1px solid #ffffff1a;padding-top:14px}
+  .field-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    min-width:44px;padding:11px 14px;border-radius:11px;
+    background:#ffffff0d;border:1px solid #ffffff17;color:var(--bone);
+    font-family:'Martian Mono',monospace;font-size:14px;font-weight:500;
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .chip:hover{background:#ffffff1a}
+  .chip[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);color:#052018;font-weight:700}
+
+  .stepper{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .step-btn{
+    width:46px;height:46px;border-radius:12px;border:1px solid #ffffff1f;background:#ffffff0d;
+    font-size:22px;line-height:1;display:grid;place-items:center;color:var(--brass);
+  }
+  .step-btn:hover{background:#ffffff1a}
+  .step-read{
+    font-family:'Martian Mono',monospace;font-size:clamp(30px,9vw,40px);font-weight:300;
+    letter-spacing:-.02em;min-width:5ch;text-align:center;
+  }
+  .step-read small{font-family:'Archivo';font-size:11px;letter-spacing:.24em;color:var(--mute);display:block;margin-top:4px;font-weight:600}
+
+  .preview{display:flex;align-items:center;gap:18px}
+  .ring-mini{position:relative;width:104px;height:104px;flex:none}
+  .ring-mini i{
+    position:absolute;width:17px;height:17px;border-radius:50%;
+    background:var(--seat);border:1px solid var(--seat-line);
+    transform:translate(-50%,-50%);transition:all .25s;
+  }
+  .ring-mini i.first{background:var(--jade);border-color:var(--jade);box-shadow:0 0 14px var(--jade-glow)}
+  .ring-mini::after{
+    content:"";position:absolute;left:50%;top:50%;width:2px;height:30px;
+    background:linear-gradient(to top,#D9A44100,var(--brass));
+    transform:translate(-50%,-100%);border-radius:2px;
+  }
+  .preview p{color:var(--mute);font-size:13.5px;line-height:1.5}
+
+  .start{
+    margin-top:4px;width:100%;padding:18px;border-radius:14px;background:var(--jade);color:#04211A;
+    font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:13px;
+    transition:transform .12s,filter .15s;
+  }
+  .start:hover{filter:brightness(1.08)}
+  .start:active{transform:translateY(1px)}
+
+  /* ---------- play ---------- */
+  #play{padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;padding:0 4px}
+  .bar .wordmark{font-size:12px;color:var(--mute);letter-spacing:.14em}
+  .tools{display:flex;gap:8px}
+  .tool{
+    padding:9px 14px;border-radius:10px;border:1px solid #ffffff1c;background:#ffffff0a;
+    font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--bone);
+  }
+  .tool:hover{background:#ffffff18}
+  .tool.brass{color:var(--brass);border-color:#D9A44140}
+
+  .stage{flex:1;display:grid;place-items:center;min-height:0;min-width:0;padding:0;overflow:hidden}
+  .table{
+    position:relative;container-type:size;
+    width:0;height:0; /* set in px by fit() — keeps the board square and inside the stage */
+  }
+  .table::before{
+    content:"";position:absolute;inset:calc(50% - var(--ring,34%));border-radius:50%;
+    border:1px solid #ffffff12;
+    background:radial-gradient(circle at 50% 45%,#12414D3d,transparent 72%);
+  }
+
+  .seat{
+    position:absolute;transform:translate(-50%,-50%);
+    width:var(--sw);padding:2.4cqmin 1cqmin;border-radius:2.4cqmin;
+    background:var(--seat);border:1px solid var(--seat-line);
+    display:flex;flex-direction:column;align-items:center;gap:.6cqmin;
+    transition:background var(--pass),border-color var(--pass),box-shadow var(--pass),transform var(--pass),opacity .3s;
+  }
+  .seat .who{
+    font-size:2.05cqmin;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);
+    transition:color var(--pass);
+  }
+  .seat .clock{
+    font-family:'Martian Mono',ui-monospace,monospace;font-weight:300;
+    font-size:var(--fs);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+  }
+  .seat.live{
+    background:linear-gradient(160deg,var(--jade),var(--jade-lo));
+    border-color:#6FE3B0;color:#042219;
+    box-shadow:0 0 0 1px var(--jade),0 0 6cqmin var(--jade-glow);
+    transform:translate(-50%,-50%) scale(1.14);
+  }
+  .seat.live .who{color:#04271Ccc}
+  .seat.live .clock{font-weight:500}
+  .seat.low .clock{color:var(--rust)}
+  .seat.live.low{background:linear-gradient(160deg,#E0714F,#A93E29);border-color:#F0A78E;box-shadow:0 0 0 1px #C8553D,0 0 6cqmin #C8553D4d}
+  .seat.live.low .clock{color:#2A0B06}
+  .seat.live.low .who{color:#2A0B06cc}
+  .seat.out{opacity:.4;background:#12333C;border-style:dashed;border-color:#C8553D66;transform:translate(-50%,-50%) scale(.94)}
+  .seat.out .clock{color:var(--rust)}
+  .seat.win{background:none;border-color:var(--brass);box-shadow:0 0 5cqmin #D9A4413d}
+  .seat.win .who{color:var(--brass)}
+
+  .hand{position:absolute;inset:0;transition:transform var(--pass);pointer-events:none}
+  .needle{
+    position:absolute;left:50%;bottom:50%;transform:translateX(-50%);
+    width:2.4cqmin;height:var(--hand-len,24%);
+    background:linear-gradient(to top,#D9A44100 6%,var(--brass) 92%);
+    clip-path:polygon(50% 0,100% 100%,0 100%);
+    transform-origin:bottom center;
+  }
+  .hub{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:3.2cqmin;height:3.2cqmin;min-width:10px;min-height:10px;border-radius:50%;
+    background:var(--brass);box-shadow:0 0 0 .9cqmin #D9A4411f;
+  }
+  .status{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% + 4.6cqmin));
+    width:44cqmin;text-align:center;pointer-events:none;
+  }
+  .status b{
+    display:block;font-size:2.1cqmin;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);
+  }
+  .status b.gold{color:var(--brass);font-size:3.2cqmin}
+
+  .hint{flex:none;text-align:center;color:var(--mute);font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;padding-top:6px}
+
+  @media (max-width:520px){
+    .bar .wordmark{display:none}
+    .bar{justify-content:center}
+    .tool{padding:9px 11px;letter-spacing:.1em}
+    .hint{font-size:10px;letter-spacing:.14em}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important}
+  }
+  :focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-radius:8px}
+</style>
+</head>
+<body>
+
+<!-- ================= MENU ================= -->
+<section class="screen on" id="menu">
+  <div class="menu-inner">
+    <header>
+      <p class="eyebrow">Chess clock</p>
+      <h1 class="title wordmark">Round<span>&nbsp;Table</span></h1>
+      <p class="lede">One clock for the whole table. Everyone gets the same bank of time; only the player on turn burns it.</p>
+    </header>
+
+    <div class="field">
+      <div class="field-head">
+        <p class="eyebrow">Players</p>
+        <p class="eyebrow" id="seatCount">4 seats</p>
+      </div>
+      <div class="chips" id="playerChips"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-head">
+        <p class="eyebrow">Time per player</p>
+      </div>
+      <div class="chips" id="timeChips"></div>
+      <div class="stepper">
+        <button class="step-btn" id="minus" aria-label="One minute less">−</button>
+        <div class="step-read wordmark" id="timeRead">10:00<small>minutes each</small></div>
+        <button class="step-btn" id="plus" aria-label="One minute more">+</button>
+      </div>
+    </div>
+
+    <div class="field preview">
+      <div class="ring-mini" id="ringMini"></div>
+      <p>Seats are numbered from the top. The brass hand points at whoever is on the clock, and play passes <strong style="color:var(--bone)">clockwise</strong> with a tap anywhere.</p>
+    </div>
+
+    <button class="start" id="startBtn">Start clock</button>
+  </div>
+</section>
+
+<!-- ================= PLAY ================= -->
+<section class="screen" id="play">
+  <div class="bar">
+    <span class="wordmark">ROUND TABLE</span>
+    <div class="tools">
+      <button class="tool" id="pauseBtn">Pause</button>
+      <button class="tool" id="resetBtn">Reset</button>
+      <button class="tool brass" id="menuBtn">New game</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="table" id="table">
+      <div class="hand" id="hand"><div class="needle"></div></div>
+      <div class="hub"></div>
+      <div class="status"><b id="status">Tap to start</b></div>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">Tap anywhere to pass &nbsp;·&nbsp; Space to pass &nbsp;·&nbsp; P to pause</p>
+</section>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+
+  // ---------- settings ----------
+  let players = 4;
+  let minutes = 10;
+  const PRESETS = [1, 3, 5, 10, 15, 30];
+
+  const playerChips = $('#playerChips');
+  const timeChips   = $('#timeChips');
+  const ringMini    = $('#ringMini');
+
+  for (let n = 2; n <= 8; n++) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = n; b.dataset.n = n;
+    b.onclick = () => { players = n; syncMenu(); };
+    playerChips.append(b);
+  }
+  PRESETS.forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = m + ' min'; b.dataset.m = m;
+    b.onclick = () => { minutes = m; syncMenu(); };
+    timeChips.append(b);
+  });
+  $('#minus').onclick = () => { minutes = Math.max(1, minutes - 1); syncMenu(); };
+  $('#plus').onclick  = () => { minutes = Math.min(180, minutes + 1); syncMenu(); };
+
+  function syncMenu() {
+    playerChips.querySelectorAll('.chip').forEach(c =>
+      c.setAttribute('aria-pressed', +c.dataset.n === players));
+    timeChips.querySelectorAll('.chip').forEach(c =>
+      c.setAttribute('aria-pressed', +c.dataset.m === minutes));
+    $('#seatCount').textContent = players + ' seats';
+    $('#timeRead').innerHTML = minutes + ':00<small>minutes each</small>';
+
+    ringMini.querySelectorAll('i').forEach(e => e.remove());
+    for (let i = 0; i < players; i++) {
+      const a = (-90 + i * 360 / players) * Math.PI / 180;
+      const d = document.createElement('i');
+      d.style.left = (50 + 38 * Math.cos(a)) + '%';
+      d.style.top  = (50 + 38 * Math.sin(a)) + '%';
+      if (i === 0) d.className = 'first';
+      ringMini.append(d);
+    }
+  }
+  syncMenu();
+
+  // ---------- game state ----------
+  const table = $('#table'), hand = $('#hand'), statusEl = $('#status');
+  let times = [], seats = [], active = 0, running = false,
+      started = false, over = false, handAngle = 0, last = 0;
+
+  // players: [ring radius %, seat width, clock size] — radius is the largest that
+  // keeps the widest seat (scaled 1.14 when live) inside the board at that count.
+  const GEO = {
+    2:[33,'30cqmin','7cqmin'], 3:[37,'28cqmin','6.6cqmin'], 4:[34,'26cqmin','6cqmin'],
+    5:[36,'23cqmin','5.2cqmin'], 6:[35,'22cqmin','5cqmin'],   7:[37,'20cqmin','4.4cqmin'],
+    8:[37,'19cqmin','4.2cqmin']
+  };
+
+  function build() {
+    seats.forEach(s => s.el.remove());
+    seats = []; times = [];
+    const [R, sw, fs] = GEO[players];
+    // Sizes above are tuned for a 5-character clock ("39:00"). Longer banks
+    // ("180:00") get scaled down so the digits never outgrow the seat.
+    const chars = Math.max(4, (minutes + ':00').length);
+    const scale = Math.min(1, 5 / chars) * 0.92;
+    const fsFit = (parseFloat(fs) * scale).toFixed(2) + 'cqmin';
+    table.style.setProperty('--hand-len', (R - 9) + '%');
+    table.style.setProperty('--ring', R + '%');
+    fit();
+
+    for (let i = 0; i < players; i++) {
+      const a = (-90 + i * 360 / players) * Math.PI / 180;
+      const el = document.createElement('div');
+      el.className = 'seat';
+      el.style.cssText = `--sw:${sw};--fs:${fsFit};left:${50 + R * Math.cos(a)}%;top:${50 + R * Math.sin(a)}%`;
+      el.innerHTML = `<span class="who">Seat ${i + 1}</span><span class="clock"></span>`;
+      table.append(el);
+      seats.push({ el, clock: el.querySelector('.clock') });
+      times.push(minutes * 60000);
+    }
+    active = 0; handAngle = 0; running = false; started = false; over = false;
+    $('#pauseBtn').textContent = 'Pause';
+    fit();
+    render();
+  }
+
+  // Keep the board square and always inside the stage, whatever the screen shape.
+  const stage = document.querySelector('.stage');
+  function fit() {
+    // A round table has to be round: take the smaller dimension, both ways.
+    const side = Math.max(120, Math.min(stage.clientWidth - 4, stage.clientHeight - 4));
+    table.style.width = table.style.height = side + 'px';
+    aimHand(false);
+  }
+  addEventListener('resize', fit);
+  addEventListener('orientationchange', () => setTimeout(fit, 120));
+
+  // Where the active seat actually sits on screen, in degrees from straight up.
+  function seatAngle(i) {
+    const a = (-90 + i * 360 / players) * Math.PI / 180;
+    const d = Math.atan2(table.clientHeight * Math.sin(a), table.clientWidth * Math.cos(a));
+    return d * 180 / Math.PI + 90;
+  }
+  function aimHand(animate) {
+    const want = seatAngle(active);
+    let delta = ((want - (handAngle % 360)) % 360 + 360) % 360;   // never unwinds backwards
+    if (!animate) {                                               // resize: snap, don't spin
+      hand.style.transition = 'none';
+      handAngle = want;
+      hand.style.transform = `rotate(${handAngle}deg)`;
+      hand.offsetHeight;
+      hand.style.transition = '';
+      return;
+    }
+    handAngle += delta || 360;
+    hand.style.transform = `rotate(${handAngle}deg)`;
+  }
+
+  function fmt(ms) {
+    if (ms <= 0) return '0.0';
+    if (ms < 10000) return (ms / 1000).toFixed(1);
+    const t = Math.ceil(ms / 1000);
+    return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  }
+
+  function render() {
+    seats.forEach((s, i) => {
+      s.clock.textContent = fmt(times[i]);
+      s.el.classList.toggle('live', i === active && !over);
+      s.el.classList.toggle('low', times[i] > 0 && times[i] < 10000);
+      s.el.classList.toggle('out', times[i] <= 0);
+      s.el.classList.toggle('win', over && times[i] > 0);
+      if (times[i] <= 0) s.el.querySelector('.who').textContent = 'Out of time';
+    });
+    statusEl.classList.toggle('gold', over);
+    statusEl.textContent =
+      over     ? (times.some(t => t > 0) ? `Seat ${times.findIndex(t => t > 0) + 1} wins` : 'No time left')
+    : !started ? 'Tap to start'
+    : !running ? 'Paused — tap to resume'
+    :            `Seat ${active + 1} on the clock`;
+  }
+
+  function alive() { return times.filter(t => t > 0).length; }
+
+  function pass() {
+    if (over) return;
+    let step = 0, i = active;
+    do { i = (i + 1) % players; step++; } while (times[i] <= 0 && step <= players);
+    active = i;
+    aimHand(true);                       // always winds forward — clockwise
+    render();
+  }
+
+  function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = now - last; last = now;
+    if (!running || over || dt > 1000) return;
+    times[active] = Math.max(0, times[active] - dt);
+    if (times[active] === 0) {
+      if (alive() <= 1) { over = true; running = false; $('#pauseBtn').textContent = 'Resume'; }
+      else { pass(); return; }
+    }
+    render();
+  }
+  requestAnimationFrame(t => { last = t; requestAnimationFrame(tick); });
+
+  // ---------- input ----------
+  document.addEventListener('pointerdown', e => {
+    if (!$('#play').classList.contains('on')) return;
+    if (e.target.closest('button')) return;
+    if (over) return;
+    if (!started) { started = true; running = true; render(); return; }
+    if (!running) { running = true; $('#pauseBtn').textContent = 'Pause'; render(); return; }
+    pass();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!$('#play').classList.contains('on')) return;
+    if (e.code === 'Space') { e.preventDefault(); document.activeElement?.blur?.();
+      if (over) return;
+      if (!started || !running) { started = true; running = true; $('#pauseBtn').textContent = 'Pause'; render(); }
+      else pass();
+    }
+    if (e.key.toLowerCase() === 'p') togglePause();
+  });
+
+  function togglePause() {
+    if (over || !started) return;
+    running = !running;
+    $('#pauseBtn').textContent = running ? 'Pause' : 'Resume';
+    render();
+  }
+
+  $('#pauseBtn').onclick = e => { e.currentTarget.blur(); togglePause(); };
+  $('#resetBtn').onclick = e => { e.currentTarget.blur(); build(); };
+  $('#menuBtn').onclick  = () => { $('#play').classList.remove('on'); $('#menu').classList.add('on'); };
+  $('#startBtn').onclick = () => {
+    $('#menu').classList.remove('on'); $('#play').classList.add('on'); build();
+  };
+})();
+</script>
+</body>
+</html>
