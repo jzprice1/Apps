@@ -290,6 +290,7 @@
       data.length + " event" + (data.length===1?"":"s") + " • refreshed " +
       now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
     renderAll();
+    if(state.view==="list") scrollListToToday();
   }
 
   function showSetupState(){
@@ -379,7 +380,7 @@
       list.forEach(function(ev){
         var groupLabel = ev.date ? fmtDate(ev.date) : "No date";
         if(groupLabel !== lastGroup){
-          html += '<div class="dayGroupLabel">'+escapeHtml(groupLabel)+'</div>';
+          html += '<div class="dayGroupLabel" data-date="'+(ev.date||'')+'">'+escapeHtml(groupLabel)+'</div>';
           lastGroup = groupLabel;
         }
         html += cardHtml(ev);
@@ -388,6 +389,24 @@
       list.forEach(function(ev){ html += cardHtml(ev); });
     }
     el.innerHTML = html;
+  }
+
+  /* scroll the list so today (or the next upcoming date) lands at the top,
+     tucked just under the sticky topbar; past days scroll off above */
+  function scrollListToToday(){
+    if(state.view !== "list" || state.sort !== "date") return;
+    var labels = document.querySelectorAll("#listView .dayGroupLabel[data-date]");
+    if(!labels.length) return;
+    var today = todayISO();
+    var target = null;
+    for(var i=0;i<labels.length;i++){
+      if(labels[i].getAttribute("data-date") >= today){ target = labels[i]; break; }
+    }
+    if(!target) target = labels[labels.length-1]; // all events are in the past
+    var topbar = document.querySelector(".topbar");
+    var offset = (topbar ? topbar.offsetHeight : 0) + 8;
+    var y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({top: Math.max(0,y), behavior:"auto"});
   }
 
   /* ---------- calendar rendering ---------- */
@@ -499,6 +518,8 @@
   }
 
   /* ---------- wire up ---------- */
+  if("scrollRestoration" in history) history.scrollRestoration = "manual";
+
   document.addEventListener("DOMContentLoaded", function(){
     loadPrefs();
 
@@ -531,6 +552,7 @@
         document.getElementById("sortSelect").style.display = state.view==="list" ? "block":"none";
         savePrefs();
         renderAll();
+        if(state.view==="list") scrollListToToday();
       });
     });
 
@@ -552,6 +574,7 @@
     });
     document.getElementById("sortSelect").addEventListener("change", function(e){
       state.sort = e.target.value; savePrefs(); renderList();
+      scrollListToToday();
     });
 
     document.getElementById("refreshBtn").addEventListener("click", function(){
