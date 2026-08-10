@@ -15390,5 +15390,18 @@
     "network": "ESPN",
     "notes": "",
     "rank": 0
+  },
+  {
+    "sport": "CFB",
+    "away": "Panthers",
+    "home": "Cardinals",
+    "title": "",
+    "time": "18:00",
+    "week": "Week 1",
+    "network": "",
+    "notes": "",
+    "id": "e_msnrvgtw_2p2upf",
+    "date": "2026-08-06",
+    "rank": 3
   }
 ]
