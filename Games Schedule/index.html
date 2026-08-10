@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>My Game Schedule</title>
+<style>
+  :root{
+    --gray-0:#e5e7eb; --r1:#cffafe; --r2:#67e8f9; --r3:#fde047; --r4:#fb923c; --r5:#dc2626;
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --card:#ffffff; --accent:#2563eb;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);
+    padding-bottom:env(safe-area-inset-bottom);}
+  button{cursor:pointer;font-family:inherit;}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);}
+
+  .topbar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+    padding:calc(env(safe-area-inset-top) + 10px) 14px 0 14px;}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .topbar h1{font-size:17px;margin:0;font-weight:700;}
+  .subtitle{font-size:11px;color:var(--muted);margin:-6px 0 10px;}
+  .refreshBtn{border:1px solid var(--line);background:var(--card);border-radius:8px;width:32px;height:32px;font-size:15px;color:var(--muted);}
+  .tabs{display:flex;gap:4px;background:#f3f4f6;border-radius:8px;padding:3px;margin-bottom:10px;}
+  .tab{flex:1;border:none;background:none;padding:9px 8px;border-radius:6px;font-size:14px;font-weight:600;color:var(--muted);}
+  .tab.active{background:var(--accent);color:#fff;}
+
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;}
+  .seg{display:flex;gap:4px;flex:1;min-width:0;}
+  .seg button{flex:1;border:1px solid var(--line);background:var(--card);padding:6px 4px;font-size:11px;border-radius:6px;color:var(--muted);white-space:nowrap;}
+  .seg button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .filters input[type=text]{flex:1 1 100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;}
+  .filters select{padding:6px 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;color:var(--ink);background:var(--card);}
+  .hideZeroLabel{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap;}
+
+  #content{padding:12px 14px 24px;}
+
+  /* List cards */
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:10px 12px;
+    display:flex;gap:10px;align-items:flex-start;position:relative;overflow:hidden;}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;}
+  .card[data-rank="0"]::before{background:var(--gray-0);}
+  .card[data-rank="1"]::before{background:var(--r1);}
+  .card[data-rank="2"]::before{background:var(--r2);}
+  .card[data-rank="3"]::before{background:var(--r3);}
+  .card[data-rank="4"]::before{background:var(--r4);}
+  .card[data-rank="5"]::before{background:var(--r5);}
+  .card-body{flex:1;min-width:0;padding-left:6px;}
+  .card-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .card-date{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
+  .card-title{font-size:15px;font-weight:700;margin:2px 0 2px;line-height:1.25;word-break:break-word;}
+  .card-meta{font-size:12px;color:var(--muted);}
+  .card-notes{font-size:12px;color:var(--muted);margin-top:3px;font-style:italic;}
+  .rankPill{flex-shrink:0;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;color:#1f2937;border:1px solid rgba(0,0,0,.12);}
+  .rankPill[data-rank="0"]{background:var(--gray-0);color:#6b7280;}
+  .rankPill[data-rank="1"]{background:var(--r1);}
+  .rankPill[data-rank="2"]{background:var(--r2);}
+  .rankPill[data-rank="3"]{background:var(--r3);}
+  .rankPill[data-rank="4"]{background:var(--r4);color:#fff;}
+  .rankPill[data-rank="5"]{background:var(--r5);color:#fff;}
+  .sport-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;letter-spacing:.02em;}
+  .sport-CFB{background:#dbeafe;color:#1e40af;}
+  .sport-NFL{background:#ede9fe;color:#5b21b6;}
+  .sport-Other{background:#f3f4f6;color:#374151;}
+  .dayGroupLabel{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.03em;}
+  .dayGroupLabel:first-child{margin-top:0;}
+
+  /* Calendar */
+  .cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .cal-toolbar .seg{flex:none;width:auto;}
+  .cal-nav{display:flex;align-items:center;gap:8px;}
+  .navbtn{border:1px solid var(--line);background:var(--card);border-radius:8px;width:34px;height:34px;font-size:16px;color:var(--ink);}
+  .cal-title{font-size:15px;font-weight:700;min-width:120px;text-align:center;}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--muted);margin-bottom:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:3px;}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+  .dow{font-size:10px;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:2px;font-weight:700;}
+  .day-cell{background:var(--card);border:1px solid var(--line);border-radius:6px;min-height:44px;padding:3px 2px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;}
+  .day-cell.outside{background:#f3f4f6;opacity:.45;}
+  .day-cell.today{border-color:var(--accent);border-width:2px;}
+  .day-cell.selected{background:#dbeafe;border-color:var(--accent);}
+  .day-num{font-weight:600;color:var(--ink);}
+  .day-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+  .dot{width:6px;height:6px;border-radius:50%;}
+  .dot[data-rank="1"]{background:var(--r1);}
+  .dot[data-rank="2"]{background:var(--r2);}
+  .dot[data-rank="3"]{background:var(--r3);}
+  .dot[data-rank="4"]{background:var(--r4);}
+  .dot[data-rank="5"]{background:var(--r5);}
+  .dot-more{font-size:9px;color:var(--muted);}
+
+  .agenda{margin-top:12px;}
+  .agenda-title{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink);}
+
+  .week-day{margin-bottom:14px;}
+  .week-day-header{font-size:12px;font-weight:700;color:var(--ink);background:#f3f4f6;padding:5px 8px;border-radius:6px;margin-bottom:6px;}
+  .week-day-none{font-size:12px;color:var(--muted);padding:0 8px;font-style:italic;}
+
+  /* Empty / setup state */
+  .setup{padding:40px 20px;text-align:center;}
+  .setup h2{font-size:16px;margin:0 0 8px;}
+  .setup p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
+  .setup code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;}
+  .fileFallback{margin-top:10px;font-size:12px;color:var(--muted);}
+  .fileFallback label{color:var(--accent);text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="topbar-row">
+      <h1 id="pageTitle">🏈 My Game Schedule</h1>
+      <button class="refreshBtn" id="refreshBtn" title="Refresh">⟳</button>
+    </div>
+    <div class="subtitle" id="subtitle"></div>
+    <div class="tabs">
+      <button class="tab active" data-view="list">List</button>
+      <button class="tab" data-view="calendar">Calendar</button>
+    </div>
+    <div class="filters" id="filters" style="display:none;">
+      <div class="seg" id="sportFilter">
+        <button class="active" data-sport="All">All</button>
+        <button data-sport="CFB">CFB</button>
+        <button data-sport="NFL">NFL</button>
+        <button data-sport="Other">Misc</button>
+      </div>
+      <label class="hideZeroLabel"><input type="checkbox" id="hideZero" checked> Hide rank 0</label>
+      <input type="text" id="searchInput" placeholder="Search…">
+      <select id="sortSelect">
+        <option value="date">Date</option>
+        <option value="rank">Rank</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="setupState" class="setup" style="display:none;">
+      <h2>No schedule data found</h2>
+      <p>
+        Export your backup from the Game Priority Planner app, save it in this same folder as
+        <code>data.json</code>, and reload this page. On GitHub, just commit/overwrite <code>data.json</code>
+        whenever you want to update what's shown here.
+      </p>
+      <button class="btn" id="setupPickBtn">Choose a file instead</button>
+      <div class="fileFallback">or drop a JSON file anywhere on this page</div>
+      <input type="file" id="filePicker" accept=".json" style="display:none;">
+    </div>
+
+    <div id="listView" style="display:none;"></div>
+    <div id="calendarView" style="display:none;">
+      <div class="cal-toolbar">
+        <div class="seg" id="calViewToggle">
+          <button class="active" data-calview="month">Month</button>
+          <button data-calview="week">Week</button>
+        </div>
+        <div class="cal-nav">
+          <button class="navbtn" id="calPrev">‹</button>
+          <button class="navbtn" id="calNext">›</button>
+        </div>
+      </div>
+      <div class="cal-title" id="calTitle"></div>
+      <div class="legend">
+        <span><i style="background:var(--r1);"></i>1</span>
+        <span><i style="background:var(--r2);"></i>2</span>
+        <span><i style="background:var(--r3);"></i>3</span>
+        <span><i style="background:var(--r4);"></i>4</span>
+        <span><i style="background:var(--r5);"></i>5</span>
+      </div>
+      <div id="calBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DATA_FILE = "data.json";
+  var LOCAL_CACHE_KEY = "gameScheduleViewer_cache_v1";
+  var PREFS_KEY = "gameScheduleViewer_prefs_v1";
+
+  var state = {
+    events: [],
+    view: "list",
+    sportFilter: "All",
+    search: "",
+    sort: "date",
+    hideZero: true,
+    calView: "month",
+    calYear: null,
+    calMonth: null,
+    weekStart: null,
+    selectedDate: null
+  };
+
+  var RANK_LABEL = {
+    0:"No interest", 1:"Check score", 2:"On in background",
+    3:"Will watch", 4:"Bar-worthy", 5:"Emotionally invested"
+  };
+
+  /* ---------- date utils ---------- */
+  function pad2(n){ return n<10 ? "0"+n : ""+n; }
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+  }
+  function addDays(dateStr, n){
+    var p = dateStr.split("-").map(Number);
+    var d = new Date(p[0], p[1]-1, p[2]);
+    d.setDate(d.getDate()+n);
+    return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+  }
+  function startOfWeekISO(dateStr){
+    var p = dateStr.split("-").map(Number);
+    var d = new Date(p[0], p[1]-1, p[2]);
+    d.setDate(d.getDate()-d.getDay());
+    return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+  }
+  function fmtDate(d){
+    if(!d) return "";
+    var p = d.split("-");
+    var dt = new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+    return dt.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  }
+  function fmtTime(t){
+    if(!t) return "TBD";
+    var p = t.split(":"); var h = parseInt(p[0],10); var m=p[1];
+    var ampm = h>=12 ? "PM":"AM"; var h12 = h%12; if(h12===0) h12=12;
+    return h12+":"+m+" "+ampm;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function displayTitle(ev){
+    if(ev.away && ev.home) return ev.away + " @ " + ev.home;
+    if(ev.title) return ev.title;
+    return "(untitled event)";
+  }
+
+  /* ---------- data loading ---------- */
+  function loadData(){
+    fetch(DATA_FILE, {cache:"no-store"}).then(function(res){
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function(data){
+      applyData(data, "Loaded " + DATA_FILE);
+    }).catch(function(){
+      var cached = readCache();
+      if(cached){
+        applyData(cached, "Showing last loaded data (couldn't reach " + DATA_FILE + ")");
+      } else {
+        showSetupState();
+      }
+    });
+  }
+
+  function readCache(){
+    try{
+      var raw = localStorage.getItem(LOCAL_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function writeCache(data){
+    try{ localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(data)); }catch(e){}
+  }
+
+  function applyData(data, statusMsg){
+    if(!Array.isArray(data)) data = [];
+    state.events = data;
+    writeCache(data);
+    document.getElementById("setupState").style.display = "none";
+    document.getElementById("filters").style.display = "flex";
+    document.getElementById("listView").style.display = state.view==="list" ? "block" : "none";
+    document.getElementById("calendarView").style.display = state.view==="calendar" ? "block" : "none";
+    var now = new Date();
+    document.getElementById("subtitle").textContent =
+      data.length + " event" + (data.length===1?"":"s") + " • refreshed " +
+      now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+    renderAll();
+  }
+
+  function showSetupState(){
+    document.getElementById("setupState").style.display = "block";
+    document.getElementById("filters").style.display = "none";
+    document.getElementById("listView").style.display = "none";
+    document.getElementById("calendarView").style.display = "none";
+    document.getElementById("subtitle").textContent = "";
+  }
+
+  function loadFromFile(file){
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(reader.result);
+        applyData(data, "Loaded " + file.name);
+      }catch(e){
+        alert("Couldn't read that file as JSON backup data.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------- filtering ---------- */
+  function getFilteredSortedEvents(){
+    var list = state.events.slice();
+    if(state.sportFilter!=="All") list = list.filter(function(e){ return e.sport===state.sportFilter; });
+    if(state.hideZero) list = list.filter(function(e){ return (e.rank||0) > 0; });
+    if(state.search){
+      var q = state.search.toLowerCase();
+      list = list.filter(function(e){
+        return displayTitle(e).toLowerCase().indexOf(q)>=0 || (e.week||'').toLowerCase().indexOf(q)>=0 || (e.notes||'').toLowerCase().indexOf(q)>=0;
+      });
+    }
+    if(state.sort==="date"){
+      list.sort(function(a,b){
+        var da=(a.date||'')+"T"+(a.time||'00:00'), db=(b.date||'')+"T"+(b.time||'00:00');
+        return da.localeCompare(db);
+      });
+    } else {
+      list.sort(function(a,b){
+        if((b.rank||0)!==(a.rank||0)) return (b.rank||0)-(a.rank||0);
+        return (a.date||'').localeCompare(b.date||'');
+      });
+    }
+    return list;
+  }
+
+  function getCalendarFilteredEventsByDate(){
+    var map = {};
+    state.events.forEach(function(ev){
+      if(!ev.date) return;
+      if(state.hideZero && !(ev.rank>0)) return;
+      if(state.sportFilter!=="All" && ev.sport!==state.sportFilter) return;
+      if(!map[ev.date]) map[ev.date] = [];
+      map[ev.date].push(ev);
+    });
+    Object.keys(map).forEach(function(d){
+      map[d].sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+    });
+    return map;
+  }
+
+  /* ---------- list rendering ---------- */
+  function cardHtml(ev){
+    return '<div class="card" data-rank="'+(ev.rank||0)+'">'
+      + '<div class="rankPill" data-rank="'+(ev.rank||0)+'" title="'+RANK_LABEL[ev.rank||0]+'">'+(ev.rank||0)+'</div>'
+      + '<div class="card-body">'
+      +   '<div class="card-top"><span class="card-date">'+fmtDate(ev.date)+(ev.time?' • '+fmtTime(ev.time):' • TBD')+'</span>'
+      +   '<span class="sport-tag sport-'+ev.sport+'">'+ev.sport+'</span></div>'
+      +   '<div class="card-title">'+escapeHtml(displayTitle(ev))+'</div>'
+      +   '<div class="card-meta">'+[ev.week, ev.network].filter(Boolean).map(escapeHtml).join(' • ')+'</div>'
+      +   (ev.notes ? '<div class="card-notes">'+escapeHtml(ev.notes)+'</div>' : '')
+      + '</div></div>';
+  }
+
+  function renderList(){
+    var list = getFilteredSortedEvents();
+    var el = document.getElementById("listView");
+    if(list.length===0){
+      el.innerHTML = '<div class="empty">No events match. Try adjusting filters.</div>';
+      return;
+    }
+    var html = "";
+    if(state.sort==="date"){
+      var lastGroup = null;
+      list.forEach(function(ev){
+        var groupLabel = ev.date ? fmtDate(ev.date) : "No date";
+        if(groupLabel !== lastGroup){
+          html += '<div class="dayGroupLabel">'+escapeHtml(groupLabel)+'</div>';
+          lastGroup = groupLabel;
+        }
+        html += cardHtml(ev);
+      });
+    } else {
+      list.forEach(function(ev){ html += cardHtml(ev); });
+    }
+    el.innerHTML = html;
+  }
+
+  /* ---------- calendar rendering ---------- */
+  function renderCalendar(){
+    if(state.calView==="month") renderMonth();
+    else renderWeek();
+  }
+
+  function renderMonth(){
+    var y = state.calYear, m = state.calMonth;
+    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById("calTitle").textContent = monthNames[m] + " " + y;
+
+    var firstDay = new Date(y,m,1);
+    var startOffset = firstDay.getDay();
+    var daysInMonth = new Date(y,m+1,0).getDate();
+    var daysInPrevMonth = new Date(y,m,0).getDate();
+    var eventsByDate = getCalendarFilteredEventsByDate();
+    var today = todayISO();
+
+    var dow = ["S","M","T","W","T","F","S"];
+    var html = '<div class="month-grid">';
+    dow.forEach(function(d){ html += '<div class="dow">'+d+'</div>'; });
+
+    var totalCells = Math.ceil((startOffset+daysInMonth)/7)*7;
+    for(var i=0;i<totalCells;i++){
+      var dayNum, cls="day-cell", cellDate;
+      if(i < startOffset){
+        dayNum = daysInPrevMonth - (startOffset-1-i); cls += " outside"; cellDate = null;
+      } else if(i >= startOffset+daysInMonth){
+        dayNum = i - (startOffset+daysInMonth) + 1; cls += " outside"; cellDate = null;
+      } else {
+        dayNum = i - startOffset + 1;
+        cellDate = y+"-"+pad2(m+1)+"-"+pad2(dayNum);
+      }
+      if(cellDate === today) cls += " today";
+      if(cellDate && cellDate === state.selectedDate) cls += " selected";
+      html += '<div class="'+cls+'"'+(cellDate?' data-date="'+cellDate+'"':'')+'>';
+      html += '<div class="day-num">'+dayNum+'</div>';
+      if(cellDate && eventsByDate[cellDate]){
+        var evs = eventsByDate[cellDate];
+        html += '<div class="day-dots">';
+        evs.slice(0,4).forEach(function(ev){ html += '<span class="dot" data-rank="'+(ev.rank||0)+'"></span>'; });
+        if(evs.length>4) html += '<span class="dot-more">+'+(evs.length-4)+'</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // agenda panel for the selected (or today's) date
+    var focusDate = state.selectedDate && dateInMonth(state.selectedDate,y,m) ? state.selectedDate : null;
+    html += '<div class="agenda">';
+    if(focusDate){
+      var evsForDay = eventsByDate[focusDate] || [];
+      html += '<div class="agenda-title">'+fmtDate(focusDate)+'</div>';
+      html += evsForDay.length ? evsForDay.map(cardHtml).join("") : '<div class="week-day-none">Nothing scheduled</div>';
+    } else {
+      html += '<div class="agenda-title">Tap a day to see details</div>';
+    }
+    html += '</div>';
+
+    document.getElementById("calBody").innerHTML = html;
+  }
+  function dateInMonth(dateStr,y,m){
+    var p = dateStr.split("-").map(Number);
+    return p[0]===y && (p[1]-1)===m;
+  }
+
+  function renderWeek(){
+    var start = state.weekStart;
+    var end = addDays(start,6);
+    document.getElementById("calTitle").textContent = fmtDate(start) + " – " + fmtDate(end);
+
+    var eventsByDate = getCalendarFilteredEventsByDate();
+    var html = "";
+    for(var i=0;i<7;i++){
+      var d = addDays(start,i);
+      var evs = eventsByDate[d] || [];
+      html += '<div class="week-day">';
+      html += '<div class="week-day-header">'+fmtDate(d)+'</div>';
+      html += evs.length ? evs.map(cardHtml).join("") : '<div class="week-day-none">Nothing scheduled</div>';
+      html += '</div>';
+    }
+    document.getElementById("calBody").innerHTML = html;
+  }
+
+  function renderAll(){
+    if(state.view==="list") renderList(); else renderCalendar();
+  }
+
+  /* ---------- prefs ---------- */
+  function loadPrefs(){
+    try{
+      var raw = localStorage.getItem(PREFS_KEY);
+      if(raw){
+        var p = JSON.parse(raw);
+        if(typeof p.hideZero === "boolean") state.hideZero = p.hideZero;
+        if(p.sportFilter) state.sportFilter = p.sportFilter;
+        if(p.sort) state.sort = p.sort;
+        if(p.view) state.view = p.view;
+      }
+    }catch(e){}
+  }
+  function savePrefs(){
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      hideZero: state.hideZero, sportFilter: state.sportFilter, sort: state.sort, view: state.view
+    }));
+  }
+
+  /* ---------- wire up ---------- */
+  document.addEventListener("DOMContentLoaded", function(){
+    loadPrefs();
+
+    var now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
+    state.weekStart = startOfWeekISO(todayISO());
+    state.selectedDate = todayISO();
+
+    // reflect loaded prefs into the static controls
+    document.getElementById("hideZero").checked = state.hideZero;
+    document.getElementById("sortSelect").value = state.sort;
+    document.querySelectorAll("#sportFilter button").forEach(function(b){
+      b.classList.toggle("active", b.dataset.sport === state.sportFilter);
+    });
+    document.querySelectorAll(".tab").forEach(function(b){
+      b.classList.toggle("active", b.dataset.view === state.view);
+    });
+
+    loadData();
+
+    document.querySelectorAll(".tab").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        document.querySelectorAll(".tab").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        state.view = btn.dataset.view;
+        document.getElementById("listView").style.display = state.view==="list" ? "block":"none";
+        document.getElementById("calendarView").style.display = state.view==="calendar" ? "block":"none";
+        document.getElementById("searchInput").style.display = state.view==="list" ? "block":"none";
+        document.getElementById("sortSelect").style.display = state.view==="list" ? "block":"none";
+        savePrefs();
+        renderAll();
+      });
+    });
+
+    document.querySelectorAll("#sportFilter button").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        document.querySelectorAll("#sportFilter button").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        state.sportFilter = btn.dataset.sport;
+        savePrefs();
+        renderAll();
+      });
+    });
+
+    document.getElementById("hideZero").addEventListener("change", function(e){
+      state.hideZero = e.target.checked; savePrefs(); renderAll();
+    });
+    document.getElementById("searchInput").addEventListener("input", function(e){
+      state.search = e.target.value; renderList();
+    });
+    document.getElementById("sortSelect").addEventListener("change", function(e){
+      state.sort = e.target.value; savePrefs(); renderList();
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", function(){
+      loadData();
+    });
+
+    document.getElementById("calViewToggle").addEventListener("click", function(e){
+      var btn = e.target.closest("button[data-calview]");
+      if(!btn) return;
+      document.querySelectorAll("#calViewToggle button").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      state.calView = btn.dataset.calview;
+      renderCalendar();
+    });
+    document.getElementById("calPrev").addEventListener("click", function(){
+      if(state.calView==="month"){
+        state.calMonth--; if(state.calMonth<0){ state.calMonth=11; state.calYear--; }
+      } else {
+        state.weekStart = addDays(state.weekStart, -7);
+      }
+      renderCalendar();
+    });
+    document.getElementById("calNext").addEventListener("click", function(){
+      if(state.calView==="month"){
+        state.calMonth++; if(state.calMonth>11){ state.calMonth=0; state.calYear++; }
+      } else {
+        state.weekStart = addDays(state.weekStart, 7);
+      }
+      renderCalendar();
+    });
+    document.getElementById("calBody").addEventListener("click", function(e){
+      var cell = e.target.closest(".day-cell[data-date]");
+      if(!cell) return;
+      state.selectedDate = cell.dataset.date;
+      renderMonth();
+    });
+
+    document.getElementById("setupPickBtn").addEventListener("click", function(){
+      document.getElementById("filePicker").click();
+    });
+    document.getElementById("filePicker").addEventListener("change", function(e){
+      if(e.target.files[0]) loadFromFile(e.target.files[0]);
+    });
+    document.addEventListener("dragover", function(e){ e.preventDefault(); });
+    document.addEventListener("drop", function(e){
+      e.preventDefault();
+      if(e.dataTransfer.files && e.dataTransfer.files[0]) loadFromFile(e.dataTransfer.files[0]);
+    });
+  });
+})();
+</script>
+</body>
+</html>
