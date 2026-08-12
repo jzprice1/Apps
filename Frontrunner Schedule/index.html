@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>FrontRunner</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:#000;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;
+    padding:20px 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  .board{max-width:560px;margin:0 auto}
+  section{border:1px solid #fff;padding:12px 14px;margin-bottom:16px}
+  h2{font-size:15px;font-weight:600;margin:0 0 10px;letter-spacing:.02em}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  td{padding:6px 0;border-top:1px solid #444;vertical-align:baseline}
+  tr:first-child td{border-top:0}
+  .time{font-size:22px;font-weight:600;width:5.2em}
+  .in{width:5.5em;color:#bbb}
+  .to{color:#bbb;font-size:14px;text-align:right}
+  .none{color:#bbb;padding:4px 0}
+  footer{max-width:560px;margin:0 auto;font-size:13px;color:#999;line-height:1.6}
+  footer a{color:#fff}
+  footer p{margin:0 0 6px}
+</style>
+</head>
+<body>
+<div class="board">
+  <section>
+    <h2>Salt Lake Central &rarr; Southbound</h2>
+    <div id="south"></div>
+  </section>
+  <section>
+    <h2>Lehi &rarr; Northbound</h2>
+    <div id="north"></div>
+  </section>
+</div>
+<footer>
+  <p>Scheduled times, not live. No Sunday service. A few very early and very late weekday trips run Friday-only or skip holidays.</p>
+  <p><a href="https://www.rideuta.com/Rider-Tools/Vehicle-Locator/Map?route=750">Live train locations</a> &middot;
+     <a href="https://www.rideuta.com/Rider-Tools/Schedules-and-Maps/750-FrontRunner">UTA schedule page</a></p>
+</footer>
+
+<script>
+/* Timetable — edit here when UTA publishes a new schedule.
+   north: Lehi -> Salt Lake Central.  south: Salt Lake Central -> Lehi.
+   [departure, arrival at the other station] */
+const SCHEDULE = {
+  weekday: {
+    north: [
+      ["5:14a","5:55a"],  ["5:44a","6:25a"],  ["6:14a","6:55a"],  ["6:44a","7:25a"],
+      ["7:14a","7:55a"],  ["7:44a","8:25a"],  ["8:14a","8:55a"],  ["8:44a","9:25a"],
+      ["9:14a","9:55a"],  ["10:14a","10:55a"],["11:14a","11:55a"],["12:14p","12:55p"],
+      ["1:14p","1:55p"],  ["2:14p","2:55p"],  ["3:14p","3:55p"],  ["3:44p","4:25p"],
+      ["4:14p","4:55p"],  ["4:44p","5:25p"],  ["5:14p","5:55p"],  ["5:44p","6:25p"],
+      ["6:14p","6:55p"],  ["6:44p","7:25p"],  ["7:14p","7:55p"],  ["7:44p","8:25p"],
+      ["8:14p","8:55p"],  ["8:44p","9:25p"],  ["9:14p","9:55p"],  ["10:14p","10:55p"],
+      ["10:44p","11:25p"],["11:14p","11:55p"],["11:44p","12:25a"],["12:44a","1:17a"]
+    ],
+    south: [
+      ["5:06a","5:43a"],  ["5:36a","6:13a"],  ["6:06a","6:43a"],  ["6:36a","7:13a"],
+      ["7:06a","7:43a"],  ["7:36a","8:13a"],  ["8:06a","8:43a"],  ["8:36a","9:13a"],
+      ["9:06a","9:43a"],  ["10:06a","10:43a"],["11:06a","11:43a"],["12:06p","12:43p"],
+      ["1:06p","1:43p"],  ["2:06p","2:43p"],  ["3:06p","3:43p"],  ["3:36p","4:13p"],
+      ["4:06p","4:43p"],  ["4:36p","5:13p"],  ["5:06p","5:43p"],  ["5:36p","6:13p"],
+      ["6:06p","6:43p"],  ["6:36p","7:13p"],  ["7:06p","7:43p"],  ["8:06p","8:43p"],
+      ["8:36p","9:13p"],  ["9:06p","9:43p"],  ["10:06p","10:43p"],["11:06p","11:43p"]
+    ]
+  },
+  saturday: {
+    north: [
+      ["8:22a","8:57a"],  ["9:22a","9:57a"],  ["10:22a","10:57a"],["11:22a","11:57a"],
+      ["12:22p","12:57p"],["1:22p","1:57p"],  ["2:22p","2:57p"],  ["3:22p","3:57p"],
+      ["4:22p","4:57p"],  ["5:22p","5:57p"],  ["6:22p","6:57p"],  ["7:22p","7:57p"],
+      ["8:22p","8:57p"],  ["9:22p","9:57p"],  ["10:22p","10:57p"],["11:22p","11:57p"],
+      ["12:22a","12:57a"],["12:51a","1:25a"]
+    ],
+    south: [
+      ["6:08a","6:42a"],  ["7:08a","7:42a"],  ["8:08a","8:42a"],  ["9:08a","9:42a"],
+      ["10:08a","10:42a"],["11:08a","11:42a"],["12:08p","12:42p"],["1:08p","1:42p"],
+      ["2:08p","2:42p"],  ["3:08p","3:42p"],  ["4:08p","4:42p"],  ["5:08p","5:42p"],
+      ["6:08p","6:42p"],  ["7:08p","7:42p"],  ["8:08p","8:42p"],  ["9:08p","9:42p"],
+      ["10:08p","10:42p"],["11:08p","11:42p"]
+    ]
+  },
+  sunday: { north: [], south: [] }
+};
+
+const OTHER = { south: "Lehi", north: "SLC" };
+const DAYS = ["sunday","weekday","weekday","weekday","weekday","weekday","saturday"];
+const DAYNAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+function toMin(s){
+  const m = /^(\d{1,2}):(\d{2})([ap])$/.exec(s);
+  let h = parseInt(m[1],10) % 12;
+  if(m[3] === "p") h += 12;
+  const t = h*60 + parseInt(m[2],10);
+  return t < 180 ? t + 1440 : t;   // after-midnight trip belongs to this service day
+}
+function label(d){
+  if(d < 1) return "now";
+  if(d < 60) return d + " min";
+  return Math.floor(d/60) + "h " + String(d%60).padStart(2,"0") + "m";
+}
+function nextServiceDay(idx){
+  for(let i = 1; i <= 7; i++){
+    const j = (idx + i) % 7;
+    if(DAYS[j] !== "sunday") return { idx: j, key: DAYS[j], offset: i };
+  }
+}
+
+function render(){
+  const now = new Date();
+  let mins = now.getHours()*60 + now.getMinutes();
+  let idx  = now.getDay();
+  if(mins < 180){ mins += 1440; idx = (idx + 6) % 7; }   // still yesterday's service day
+
+  ["south","north"].forEach(dir => {
+    const rows = (SCHEDULE[DAYS[idx]][dir] || [])
+      .map(r => ({ t: toMin(r[0]), disp: r[0], arr: r[1] }))
+      .filter(r => r.t >= mins)
+      .slice(0, 4);
+
+    const el = document.getElementById(dir);
+
+    if(rows.length === 0){
+      const nd = nextServiceDay(idx);
+      const first = SCHEDULE[nd.key][dir][0];
+      el.innerHTML = '<p class="none">No more trains today' +
+        (first ? " &mdash; next is " + first[0] + " " +
+                 (nd.offset === 1 ? "tomorrow" : DAYNAME[nd.idx]) : "") + ".</p>";
+      return;
+    }
+
+    el.innerHTML = "<table>" + rows.map(r =>
+      '<tr><td class="time">' + r.disp + "</td>" +
+      '<td class="in">' + label(Math.round(r.t - mins)) + "</td>" +
+      '<td class="to">' + OTHER[dir] + " " + r.arr + "</td></tr>"
+    ).join("") + "</table>";
+  });
+}
+
+render();
+setInterval(render, 15000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) render(); });
+</script>
+</body>
+</html>
