@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>College Football TV Schedule</title>
+<style>
+  :root{
+    --bg:#050505; --panel:#0a0a0a; --line:#1c1c1c; --line2:#161616;
+    --ink:#f5f5f0; --muted:#9a9a9a; --accent:#eab308;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  button{cursor:pointer;font-family:inherit;}
+  #app{max-width:960px;margin:0 auto;min-height:100vh;padding:calc(env(safe-area-inset-top) + 14px) 12px 40px;}
+
+  /* ---- top bar ---- */
+  .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;margin-bottom:12px;}
+  .datenav{display:flex;align-items:center;gap:6px;margin-right:auto;}
+  .datenav button, .iconbtn{
+    background:var(--panel); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:7px 10px; font-size:13px; font-weight:600;
+  }
+  .datenav input[type=date]{
+    background:var(--panel); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit;
+  }
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .actions button{
+    background:var(--panel); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:8px 12px; font-size:13px; font-weight:700;
+  }
+  .actions button.primary{background:var(--accent); border-color:var(--accent); color:#181000;}
+  .actions button:disabled{opacity:.5;}
+
+  /* ---- filter panel ---- */
+  #filterPanel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:12px; display:none;
+  }
+  #filterPanel.open{display:block;}
+  .filterHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .filterHead span{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em;}
+  .filterHead .links button{background:none;border:none;color:var(--accent);font-size:12px;font-weight:700;padding:2px 6px;}
+  .chiprow{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+    border-radius:999px;padding:5px 10px 5px 8px;font-size:11px;font-weight:700;
+    color:var(--ink);background:#000;user-select:none;
+  }
+  .chip input{margin:0;width:13px;height:13px;accent-color:var(--accent);}
+  .chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .chip.off{opacity:.35;}
+  .filterSection + .filterSection{margin-top:14px;}
+
+  /* ---- status ---- */
+  #status{color:var(--muted);font-size:13px;padding:30px 6px;text-align:center;}
+  #status a{color:var(--accent);}
+
+  /* ---- schedule card (this is what gets captured for the image) ---- */
+  #scheduleWrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  #scheduleCard{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; min-width:760px;
+  }
+  .sched-title-bar{padding:14px 18px 10px; text-align:center; border-bottom:1px solid var(--line);}
+  .sched-title-bar h2{margin:0 0 3px; font-size:15px; letter-spacing:.02em; color:var(--ink); font-weight:800;}
+  .sched-title-bar .sub{font-size:11px; color:var(--muted);}
+
+  .grid-wrap{display:flex;}
+  .label-col{flex:0 0 84px; width:84px; border-right:1px solid var(--line);}
+  .label-col .ruler-spacer{height:26px; border-bottom:1px solid var(--line);}
+  .label-cell{
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:10.5px;font-weight:800;letter-spacing:.02em;
+    border-bottom:1px solid var(--line2); padding:4px 3px;
+  }
+
+  .timeline-col{flex:1 1 auto; position:relative; min-width:0;}
+  .ruler{height:26px; position:relative; border-bottom:1px solid var(--line);}
+  .ruler .tick{
+    position:absolute; top:0; bottom:0; border-left:1px solid var(--line);
+    font-size:9.5px; color:var(--muted); padding:6px 0 0 4px; white-space:nowrap;
+  }
+  .row{position:relative; border-bottom:1px solid var(--line2);}
+  .row .gridline{position:absolute; top:0; bottom:0; border-left:1px solid var(--line2);}
+
+  .block{
+    position:absolute; border-radius:6px; padding:4px 6px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.18); box-shadow:0 1px 3px rgba(0,0,0,.5);
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .block.sec{box-shadow:0 0 0 1.5px var(--accent) inset, 0 1px 3px rgba(0,0,0,.5);}
+  .block .teams{
+    font-weight:800; font-size:10px; line-height:1.2; color:#fff; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 2px rgba(0,0,0,.6);
+  }
+  .block .meta{
+    font-size:8.5px; color:rgba(255,255,255,.88); white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 2px rgba(0,0,0,.6);
+  }
+  .block img.logo{
+    width:22px; height:22px; vertical-align:-6px; margin:0 3px; object-fit:contain;
+    background:#fff; border-radius:3px; padding:1.5px;
+  }
+
+  .sched-caption{
+    padding:10px 16px 14px; text-align:center; font-size:9.5px; color:var(--muted);
+    border-top:1px solid var(--line); line-height:1.5;
+  }
+
+  @media (max-width:600px){
+    .topbar{flex-direction:column; align-items:stretch;}
+    .topbar h1{text-align:center;}
+    .datenav{justify-content:center;}
+    .actions{justify-content:center;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="datenav">
+      <button id="prevDay" aria-label="Previous Saturday">◀</button>
+      <input type="date" id="datePicker">
+      <button id="nextDay" aria-label="Next Saturday">▶</button>
+    </div>
+    <div class="actions">
+      <button id="toggleFilters">Filters</button>
+      <button id="downloadBtn" class="primary">Download as image</button>
+    </div>
+  </div>
+
+  <div id="filterPanel">
+    <div class="filterSection">
+      <div class="filterHead">
+        <span>SHOW CHANNELS</span>
+        <span class="links"><button id="chSelAll">All</button><button id="chSelNone">None</button></span>
+      </div>
+      <div class="chiprow" id="chiprow"></div>
+    </div>
+    <div class="filterSection">
+      <div class="filterHead">
+        <span>SHOW CONFERENCES</span>
+        <span class="links"><button id="confSelAll">All</button><button id="confSelNone">None</button></span>
+      </div>
+      <div class="chiprow" id="confrow"></div>
+    </div>
+  </div>
+
+  <div id="status">Loading this Saturday's slate…</div>
+
+  <div id="scheduleWrap" style="display:none;">
+    <div id="scheduleCard">
+      <div class="sched-title-bar">
+        <h2 id="cardTitle">Saturday, September 5, 2026</h2>
+        <div class="sub" id="cardSub">Week 1 — College Football TV Schedule</div>
+      </div>
+      <div class="grid-wrap" id="gridWrap"></div>
+      <div class="sched-caption">
+        All times Central · Gold outline = SEC matchup · STREAMING row = games not on traditional cable/broadcast ·
+        Data via ESPN — times &amp; networks can change
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- channel config (order matches the reference layout) ----------
+  var CHANNELS = [
+    {id:"abc",   label:"ABC",       color:"#e5e7eb", match:["abc"]},
+    {id:"cbs",   label:"CBS",       color:"#7dd3fc", match:["cbs"]},
+    {id:"fox",   label:"FOX",       color:"#f87171", match:["fox"]},
+    {id:"nbc",   label:"NBC",       color:"#818cf8", match:["nbc"]},
+    {id:"espn",  label:"ESPN",      color:"#f87171", match:["espn"]},
+    {id:"espn2", label:"ESPN2",     color:"#fca5a5", match:["espn2"]},
+    {id:"espnu", label:"ESPNU",     color:"#fda4af", match:["espnu"]},
+    {id:"secn",  label:"SEC NET",   color:"#fbbf24", match:["sec network","secn"]},
+    {id:"accn",  label:"ACCN",      color:"#93c5fd", match:["acc network","accn"]},
+    {id:"btn",   label:"BTN",       color:"#5eead4", match:["big ten network","btn"]},
+    {id:"fs1",   label:"FS1",       color:"#93c5fd", match:["fs1"]},
+    {id:"cbssn", label:"CBSSN",     color:"#fde68a", match:["cbs sports network","cbssn"]},
+    {id:"tnt",   label:"TNT",       color:"#5eead4", match:["tnt"]},
+    {id:"usa",   label:"USA",       color:"#93c5fd", match:["usa network","usa"]},
+    {id:"cw",    label:"THE CW",    color:"#fdba74", match:["the cw","cw"]},
+    {id:"streaming", label:"STREAMING", color:"#86efac", match:[]} // catch-all
+  ];
+  var CHANNEL_BY_ID = {};
+  CHANNELS.forEach(function(c){ CHANNEL_BY_ID[c.id] = c; });
+
+  var SEC_TEAMS = ["alabama","arkansas","auburn","florida","georgia","kentucky","lsu",
+    "mississippi state","missouri","oklahoma","ole miss","mississippi","south carolina",
+    "tennessee","texas a&m","vanderbilt","texas longhorns","texas tide"];
+  function isSecTeamName(name){
+    name = (name||"").toLowerCase();
+    return SEC_TEAMS.some(function(t){ return name.indexOf(t) !== -1; });
+  }
+
+  function channelForBroadcastName(name){
+    var n = (name||"").toLowerCase().trim();
+    for (var i=0;i<CHANNELS.length;i++){
+      var c = CHANNELS[i];
+      if (c.match.some(function(m){ return n === m || n.indexOf(m) !== -1; })) return c.id;
+    }
+    return "streaming";
+  }
+
+  // ---------- FBS conferences (ESPN team.conferenceId -> conference) ----------
+  // These are the only FBS conferences; any team whose conferenceId isn't in here
+  // is FCS (or lower) and never drives conference filtering on its own.
+  var FBS_CONFERENCES = [
+    {id:"1",   name:"ACC"},
+    {id:"151", name:"American"},
+    {id:"4",   name:"Big 12"},
+    {id:"5",   name:"Big Ten"},
+    {id:"12",  name:"Conference USA"},
+    {id:"18",  name:"FBS Independents"},
+    {id:"15",  name:"MAC"},
+    {id:"17",  name:"Mountain West"},
+    {id:"9",   name:"Pac-12"},
+    {id:"8",   name:"SEC"},
+    {id:"37",  name:"Sun Belt"}
+  ];
+  var FBS_CONF_BY_ID = {};
+  FBS_CONFERENCES.forEach(function(c){ FBS_CONF_BY_ID[c.id] = c; });
+
+  // ---------- date helpers ----------
+  function ymd(d){
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function ymdCompact(d){ return ymd(d).replace(/-/g,""); }
+  function fromYmd(s){
+    var p = s.split("-").map(Number);
+    return new Date(p[0], p[1]-1, p[2]);
+  }
+  function addDays(d, n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+  function nextSaturdayFrom(d){
+    var day = d.getDay(); // 0=Sun..6=Sat
+    var add = (6 - day + 7) % 7;
+    return addDays(d, add);
+  }
+  // Wall-clock parts of a UTC ISO date string in a given IANA timezone.
+  function ctParts(isoUtc){
+    var d = new Date(isoUtc);
+    var fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone:"America/Chicago", year:"numeric", month:"2-digit", day:"2-digit",
+      hour:"2-digit", minute:"2-digit", hour12:false
+    });
+    var parts = {};
+    fmt.formatToParts(d).forEach(function(p){ if(p.type!=="literal") parts[p.type]=p.value; });
+    return {
+      y:+parts.year, mo:+parts.month, da:+parts.day,
+      hour:+parts.hour, min:+parts.minute
+    };
+  }
+  function ctLabel(isoUtc){
+    var d = new Date(isoUtc);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone:"America/Chicago", hour:"numeric", minute:"2-digit", hour12:true
+    }).format(d);
+  }
+  // "Schedule day" bucketing: games before 5am CT count as the previous evening's slate.
+  function scheduleDayKey(isoUtc){
+    var p = ctParts(isoUtc);
+    var minsFromMidnight = p.hour*60 + p.min;
+    var d = new Date(p.y, p.mo-1, p.da);
+    if (minsFromMidnight < 5*60) d = addDays(d, -1);
+    return ymd(d);
+  }
+  function minutesSinceMidnightCT(isoUtc, dayKeyDate){
+    var p = ctParts(isoUtc);
+    var d = new Date(p.y, p.mo-1, p.da);
+    var dayDiff = Math.round((d - dayKeyDate) / 86400000);
+    return dayDiff*24*60 + p.hour*60 + p.min;
+  }
+
+  // ---------- state ----------
+  var state = {
+    selectedDate: nextSaturdayFrom(new Date()), events: [],
+    hiddenChannels: new Set(), hiddenConferences: new Set()
+  };
+  try {
+    var saved = JSON.parse(localStorage.getItem("cfbTvHidden") || "[]");
+    saved.forEach(function(id){ state.hiddenChannels.add(id); });
+  } catch(e){}
+  try {
+    var savedConf = JSON.parse(localStorage.getItem("cfbTvHiddenConf") || "[]");
+    savedConf.forEach(function(id){ state.hiddenConferences.add(id); });
+  } catch(e){}
+
+  var els = {
+    datePicker: document.getElementById("datePicker"),
+    prevDay: document.getElementById("prevDay"),
+    nextDay: document.getElementById("nextDay"),
+    status: document.getElementById("status"),
+    wrap: document.getElementById("scheduleWrap"),
+    gridWrap: document.getElementById("gridWrap"),
+    cardTitle: document.getElementById("cardTitle"),
+    cardSub: document.getElementById("cardSub"),
+    filterPanel: document.getElementById("filterPanel"),
+    chiprow: document.getElementById("chiprow"),
+    confrow: document.getElementById("confrow"),
+    toggleFilters: document.getElementById("toggleFilters"),
+    downloadBtn: document.getElementById("downloadBtn"),
+    chSelAll: document.getElementById("chSelAll"),
+    chSelNone: document.getElementById("chSelNone"),
+    confSelAll: document.getElementById("confSelAll"),
+    confSelNone: document.getElementById("confSelNone")
+  };
+
+  els.datePicker.value = ymd(state.selectedDate);
+
+  els.prevDay.addEventListener("click", function(){ shiftDate(-7); });
+  els.nextDay.addEventListener("click", function(){ shiftDate(7); });
+  els.datePicker.addEventListener("change", function(){
+    if (!els.datePicker.value) return;
+    state.selectedDate = fromYmd(els.datePicker.value);
+    load();
+  });
+  function shiftDate(days){
+    state.selectedDate = addDays(state.selectedDate, days);
+    els.datePicker.value = ymd(state.selectedDate);
+    load();
+  }
+
+  els.toggleFilters.addEventListener("click", function(){
+    els.filterPanel.classList.toggle("open");
+  });
+  els.chSelAll.addEventListener("click", function(){
+    state.hiddenChannels.clear(); persistHidden(); render();
+  });
+  els.chSelNone.addEventListener("click", function(){
+    CHANNELS.forEach(function(c){ state.hiddenChannels.add(c.id); });
+    persistHidden(); render();
+  });
+  function persistHidden(){
+    try { localStorage.setItem("cfbTvHidden", JSON.stringify(Array.from(state.hiddenChannels))); } catch(e){}
+    buildChips();
+  }
+
+  els.confSelAll.addEventListener("click", function(){
+    state.hiddenConferences.clear(); persistHiddenConf(); render();
+  });
+  els.confSelNone.addEventListener("click", function(){
+    FBS_CONFERENCES.forEach(function(c){ state.hiddenConferences.add(c.id); });
+    persistHiddenConf(); render();
+  });
+  function persistHiddenConf(){
+    try { localStorage.setItem("cfbTvHiddenConf", JSON.stringify(Array.from(state.hiddenConferences))); } catch(e){}
+    buildConfChips();
+  }
+
+  els.downloadBtn.addEventListener("click", downloadAsImage);
+
+  // ---------- fetch ----------
+  function load(){
+    els.status.style.display = "block";
+    els.status.innerHTML = "Loading " + state.selectedDate.toDateString() + "'s slate…";
+    els.wrap.style.display = "none";
+
+    var url = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
+      + "?dates=" + ymdCompact(state.selectedDate) + "&groups=80&limit=400";
+
+    fetch(url).then(function(res){
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function(data){
+      var targetKey = ymd(state.selectedDate);
+      var events = (data.events || []).filter(function(ev){
+        return scheduleDayKey(ev.date) === targetKey;
+      });
+      state.events = events;
+      if (!events.length){
+        els.status.innerHTML = "No games found for " + state.selectedDate.toDateString() + ".";
+        els.wrap.style.display = "none";
+        return;
+      }
+      els.status.style.display = "none";
+      els.wrap.style.display = "block";
+      buildConfChips();
+      buildChips();
+      render();
+    }).catch(function(err){
+      els.status.innerHTML = "Couldn't reach ESPN's schedule API (" + err.message + "). " +
+        "This is usually a network/CORS hiccup — try again, or check " +
+        '<a href="https://www.espn.com/college-football/schedule" target="_blank" rel="noopener">ESPN\'s schedule</a> directly.';
+      els.wrap.style.display = "none";
+    });
+  }
+
+  // ---------- grouping ----------
+  function primaryChannelName(ev){
+    var comp = ev.competitions && ev.competitions[0];
+    if (!comp) return null;
+    var geo = comp.geoBroadcasts || [];
+    var national = geo.filter(function(g){ return g.market && g.market.type === "National" && g.lang === "en"; });
+    var tv = national.find(function(g){ return g.type && g.type.shortName === "TV"; });
+    if (tv) return tv.media.shortName;
+    var stream = national.find(function(g){ return g.type && g.type.shortName === "Streaming"; });
+    if (stream) return stream.media.shortName;
+    if (comp.broadcast) return comp.broadcast.split("/")[0].trim();
+    if (comp.broadcasts && comp.broadcasts[0] && comp.broadcasts[0].names) return comp.broadcasts[0].names[0];
+    return null;
+  }
+
+  // A game is visible if EITHER team's conference is currently checked. A team whose
+  // conferenceId isn't a tracked FBS conference (i.e. an FCS opponent) never hides a
+  // game on its own — e.g. with only SEC checked, an SEC-vs-FCS game still shows.
+  function eventConferenceVisible(ev){
+    var comp = ev.competitions && ev.competitions[0];
+    if (!comp) return true;
+    var home = comp.competitors.find(function(x){ return x.homeAway === "home"; });
+    var away = comp.competitors.find(function(x){ return x.homeAway === "away"; });
+    var homeConf = home && home.team && home.team.conferenceId;
+    var awayConf = away && away.team && away.team.conferenceId;
+    var homeIsFbs = FBS_CONF_BY_ID.hasOwnProperty(homeConf);
+    var awayIsFbs = FBS_CONF_BY_ID.hasOwnProperty(awayConf);
+    var homeChecked = homeIsFbs && !state.hiddenConferences.has(homeConf);
+    var awayChecked = awayIsFbs && !state.hiddenConferences.has(awayConf);
+    if (!homeIsFbs && !awayIsFbs) return true; // shouldn't happen (groups=80), but don't hide it
+    return homeChecked || awayChecked;
+  }
+
+  function groupEvents(){
+    var groups = {}; // channelId -> [ {ev, name} ]
+    state.events.forEach(function(ev){
+      if (!eventConferenceVisible(ev)) return;
+      var name = primaryChannelName(ev);
+      var chId = name ? channelForBroadcastName(name) : "streaming";
+      if (!groups[chId]) groups[chId] = [];
+      groups[chId].push({ ev: ev, broadcastName: name || "Not on cable/broadcast" });
+    });
+    return groups;
+  }
+
+  function buildConfChips(){
+    var counts = {};
+    state.events.forEach(function(ev){
+      var comp = ev.competitions && ev.competitions[0];
+      if (!comp) return;
+      var home = comp.competitors.find(function(x){ return x.homeAway === "home"; });
+      var away = comp.competitors.find(function(x){ return x.homeAway === "away"; });
+      [home, away].forEach(function(t){
+        var cid = t && t.team && t.team.conferenceId;
+        if (FBS_CONF_BY_ID.hasOwnProperty(cid)) counts[cid] = (counts[cid] || 0) + 1;
+      });
+    });
+    els.confrow.innerHTML = "";
+    FBS_CONFERENCES.forEach(function(c){
+      if (!counts[c.id]) return;
+      var label = document.createElement("label");
+      label.className = "chip" + (state.hiddenConferences.has(c.id) ? " off" : "");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !state.hiddenConferences.has(c.id);
+      cb.addEventListener("change", function(){
+        if (cb.checked) state.hiddenConferences.delete(c.id); else state.hiddenConferences.add(c.id);
+        persistHiddenConf();
+        render();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(c.name + " (" + counts[c.id] + ")"));
+      els.confrow.appendChild(label);
+    });
+  }
+
+  function buildChips(){
+    var groups = groupEvents();
+    els.chiprow.innerHTML = "";
+    CHANNELS.forEach(function(c){
+      if (!groups[c.id] || !groups[c.id].length) return;
+      var label = document.createElement("label");
+      label.className = "chip" + (state.hiddenChannels.has(c.id) ? " off" : "");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !state.hiddenChannels.has(c.id);
+      cb.addEventListener("change", function(){
+        if (cb.checked) state.hiddenChannels.delete(c.id); else state.hiddenChannels.add(c.id);
+        persistHidden();
+        render();
+      });
+      var dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = c.color;
+      label.appendChild(cb);
+      label.appendChild(dot);
+      label.appendChild(document.createTextNode(c.label + " (" + groups[c.id].length + ")"));
+      els.chiprow.appendChild(label);
+    });
+  }
+
+  // ---------- render ----------
+  var GAME_DURATION_MIN = 210; // assumed 3.5hr broadcast window
+  var ROW_LANE_HEIGHT = 52;
+  var ROW_LANE_GAP = 3;
+
+  function render(){
+    var groups = groupEvents();
+    var dayDate = state.selectedDate;
+
+    els.cardTitle.textContent = dayDate.toLocaleDateString("en-US",
+      { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+    var wk = state.events[0] && state.events[0].week && state.events[0].week.number;
+    els.cardSub.textContent = (wk ? "Week " + wk + " — " : "") + "College Football TV Schedule";
+
+    var visibleChannels = CHANNELS.filter(function(c){
+      return groups[c.id] && groups[c.id].length && !state.hiddenChannels.has(c.id);
+    });
+
+    if (!visibleChannels.length){
+      els.gridWrap.innerHTML = '<div style="padding:30px;color:var(--muted);font-size:13px;">' +
+        'No channels selected. Use the Channels filter to turn some back on.</div>';
+      return;
+    }
+
+    // time range across visible games only
+    var allMin = [], allMax = [];
+    visibleChannels.forEach(function(c){
+      groups[c.id].forEach(function(item){
+        var start = minutesSinceMidnightCT(item.ev.date, dayDate);
+        allMin.push(start);
+        allMax.push(start + GAME_DURATION_MIN);
+      });
+    });
+    var rangeStart = Math.floor(Math.min.apply(null, allMin) / 60) * 60;
+    var rangeEnd = Math.ceil(Math.max.apply(null, allMax) / 60) * 60;
+    var totalMin = rangeEnd - rangeStart;
+
+    function pct(min){ return ((min - rangeStart) / totalMin) * 100; }
+
+    // ---- label column ----
+    var labelCol = document.createElement("div");
+    labelCol.className = "label-col";
+    var spacer = document.createElement("div");
+    spacer.className = "ruler-spacer";
+    labelCol.appendChild(spacer);
+
+    // ---- timeline column ----
+    var timelineCol = document.createElement("div");
+    timelineCol.className = "timeline-col";
+    var ruler = document.createElement("div");
+    ruler.className = "ruler";
+    for (var m = rangeStart; m <= rangeEnd; m += 60){
+      var tick = document.createElement("div");
+      tick.className = "tick";
+      tick.style.left = pct(m) + "%";
+      tick.textContent = hourLabel(m);
+      ruler.appendChild(tick);
+    }
+    timelineCol.appendChild(ruler);
+
+    visibleChannels.forEach(function(c){
+      var items = groups[c.id].slice().sort(function(a,b){
+        return minutesSinceMidnightCT(a.ev.date, dayDate) - minutesSinceMidnightCT(b.ev.date, dayDate);
+      });
+
+      // lane assignment to avoid overlap within a channel row
+      var lanes = []; // array of {endMin}
+      var placed = items.map(function(item){
+        var start = minutesSinceMidnightCT(item.ev.date, dayDate);
+        var end = start + GAME_DURATION_MIN;
+        var lane = lanes.findIndex(function(l){ return start >= l.end; });
+        if (lane === -1){ lane = lanes.length; lanes.push({end:end}); }
+        else { lanes[lane].end = end; }
+        return { item:item, start:start, end:end, lane:lane };
+      });
+      var laneCount = Math.max(1, lanes.length);
+      var rowHeight = laneCount * ROW_LANE_HEIGHT + (laneCount-1) * ROW_LANE_GAP;
+
+      var labelCell = document.createElement("div");
+      labelCell.className = "label-cell";
+      labelCell.style.height = rowHeight + "px";
+      labelCell.style.color = c.color;
+      labelCell.textContent = c.label;
+      labelCol.appendChild(labelCell);
+
+      var row = document.createElement("div");
+      row.className = "row";
+      row.style.height = rowHeight + "px";
+      for (var gm = rangeStart; gm <= rangeEnd; gm += 60){
+        var gl = document.createElement("div");
+        gl.className = "gridline";
+        gl.style.left = pct(gm) + "%";
+        row.appendChild(gl);
+      }
+      placed.forEach(function(p){
+        row.appendChild(renderBlock(p, pct, rowHeight, laneCount));
+      });
+      timelineCol.appendChild(row);
+    });
+
+    els.gridWrap.innerHTML = "";
+    els.gridWrap.appendChild(labelCol);
+    els.gridWrap.appendChild(timelineCol);
+  }
+
+  function hourLabel(min){
+    var h = Math.floor((min % (24*60)) / 60);
+    var suffix = h >= 12 ? "pm" : "am";
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + suffix;
+  }
+
+  function renderBlock(p, pct, rowHeight, laneCount){
+    var item = p.item, ev = item.ev;
+    var comp = ev.competitions[0];
+    var home = comp.competitors.find(function(x){ return x.homeAway === "home"; });
+    var away = comp.competitors.find(function(x){ return x.homeAway === "away"; });
+
+    var left = pct(p.start);
+    var width = pct(p.end) - left;
+    width = Math.max(width, 6);
+
+    var block = document.createElement("div");
+    block.className = "block";
+    var isSec = isSecTeamName(home.team.displayName) || isSecTeamName(away.team.displayName);
+    if (isSec) block.className += " sec";
+
+    var laneH = ROW_LANE_HEIGHT;
+    block.style.left = left + "%";
+    block.style.width = width + "%";
+    block.style.top = (p.lane * (laneH + ROW_LANE_GAP)) + "px";
+    block.style.height = laneH + "px";
+
+    var awayColor = "#" + (away.team.color || "444444");
+    var homeColor = "#" + (home.team.color || "222222");
+    block.style.background = "linear-gradient(90deg," + awayColor + "cc 0%," + awayColor + "cc 50%," +
+      homeColor + "cc 50%," + homeColor + "cc 100%)";
+
+    var awayRank = away.curatedRank && away.curatedRank.current <= 25 ? "#" + away.curatedRank.current + " " : "";
+    var homeRank = home.curatedRank && home.curatedRank.current <= 25 ? "#" + home.curatedRank.current + " " : "";
+
+    var teamsLine = document.createElement("div");
+    teamsLine.className = "teams";
+    teamsLine.innerHTML =
+      '<img class="logo" src="' + away.team.logo + '" alt="" loading="lazy" crossorigin="anonymous">' +
+      awayRank + away.team.shortDisplayName + " at " +
+      homeRank + home.team.shortDisplayName +
+      '<img class="logo" src="' + home.team.logo + '" alt="" loading="lazy" crossorigin="anonymous">';
+    block.appendChild(teamsLine);
+
+    var venue = comp.venue ? (comp.venue.fullName + (comp.venue.address ? ", " + comp.venue.address.city : "")) : "";
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = ctLabel(ev.date) + " CT · " + venue;
+    block.appendChild(meta);
+
+    block.title = away.team.displayName + " at " + home.team.displayName + "\n" +
+      ctLabel(ev.date) + " CT on " + item.broadcastName + "\n" + venue;
+
+    return block;
+  }
+
+  // ---------- download as square image ----------
+  function downloadAsImage(){
+    if (typeof html2canvas === "undefined"){
+      alert("Image export library didn't load — check your connection and try again.");
+      return;
+    }
+    els.downloadBtn.disabled = true;
+    var originalText = els.downloadBtn.textContent;
+    els.downloadBtn.textContent = "Rendering…";
+
+    var target = document.getElementById("scheduleCard");
+    html2canvas(target, { backgroundColor: "#0a0a0a", scale: 2, useCORS: true }).then(function(canvas){
+      var size = Math.min(canvas.width, canvas.height);
+      // Crop from the top-left so the channel labels and title are never cut off.
+      var sx = 0, sy = 0;
+      if (canvas.width > size) sx = Math.min((canvas.width - size) / 2, canvas.width - size);
+      var out = document.createElement("canvas");
+      out.width = size; out.height = size;
+      var ctx = out.getContext("2d");
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(canvas, sx, sy, size, size, 0, 0, size, size);
+
+      out.toBlob(function(blob){
+        var fileName = "cfb-tv-schedule-" + ymd(state.selectedDate) + ".png";
+        var file;
+        try { file = new File([blob], fileName, { type: "image/png" }); } catch(e){}
+
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })){
+          navigator.share({ files: [file], title: "College Football TV Schedule" })
+            .catch(function(err){ if (err && err.name !== "AbortError") fallbackDownload(blob, fileName); })
+            .finally(reset);
+          return;
+        }
+        fallbackDownload(blob, fileName);
+        reset();
+      }, "image/png");
+    }).catch(function(err){
+      alert("Couldn't generate the image: " + err.message);
+      reset();
+    });
+
+    function fallbackDownload(blob, fileName){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }
+    function reset(){
+      els.downloadBtn.disabled = false;
+      els.downloadBtn.textContent = originalText;
+    }
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
