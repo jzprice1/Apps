@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dailies">
+<meta name="theme-color" content="#14161a">
+<title>Daily Games</title>
+<style>
+  :root{--bg:#14161a;--card:#1e2127;--text:#eef0f3;--muted:#8b93a1;--accent:#4f9cf9;--ok:#3fb27f;--wait:#e0a030;--line:#2c313a}
+  @media (prefers-color-scheme: light){:root{--bg:#f3f4f6;--card:#fff;--text:#16181c;--muted:#6b7280;--line:#e2e5ea}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 10px}
+  h1{font-size:22px;margin:0}
+  button{font:inherit;color:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--line);cursor:pointer}
+  button.primary{background:var(--accent);color:#fff;font-weight:600}
+  button.danger{color:#e5604f}
+  .summary{color:var(--muted);font-size:14px;margin-bottom:12px}
+  .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;border-left:5px solid var(--wait)}
+  .card.ready{border-left-color:var(--ok)}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .name{font-size:18px;font-weight:600}
+  .status{font-size:13px;font-weight:600;white-space:nowrap}
+  .ready .status{color:var(--ok)} .wait .status{color:var(--wait)}
+  .streak{font-size:14px;font-weight:600;color:var(--wait);margin-left:6px;white-space:nowrap}
+  .count{font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;margin:6px 0}
+  .meta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:13px;color:var(--muted)}
+  .meta span:nth-child(even){color:var(--text)}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .actions a.play{flex:1;text-align:center;text-decoration:none;background:var(--accent);color:#fff;font-weight:600;padding:10px 14px;border-radius:10px;min-width:120px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  dialog{border:0;border-radius:16px;background:var(--card);color:var(--text);width:min(440px,92vw);padding:18px}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+  input,select{width:100%;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .dlgActions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+  .foot{display:flex;gap:8px;justify-content:center;margin-top:20px}
+  .foot button{font-size:13px;padding:8px 12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Daily Games</h1>
+  <button class="primary" id="addBtn">+ Add</button>
+</header>
+<div class="summary" id="summary"></div>
+<div id="list"></div>
+<div class="foot">
+  <button id="exportBtn">Export</button>
+  <button id="importBtn">Import</button>
+  <input type="file" id="importFile" accept="application/json" hidden>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h2 id="dlgTitle" style="margin:0 0 4px;font-size:18px">Add game</h2>
+    <label>Name</label>
+    <input id="fName" required placeholder="Wordle">
+    <label>Link</label>
+    <input id="fUrl" type="url" required placeholder="https://www.nytimes.com/games/wordle">
+    <label>Reset type</label>
+    <select id="fMode">
+      <option value="rolling">Rolling: some hours after I click</option>
+      <option value="daily">Fixed: same time every day</option>
+    </select>
+    <div id="rollingOpts">
+      <label>Hours until reset</label>
+      <input id="fHours" type="number" min="0.25" step="0.25" value="24">
+    </div>
+    <div id="dailyOpts" hidden>
+      <div class="row">
+        <div><label>Reset time</label><input id="fTime" type="time" value="00:00"></div>
+        <div><label>Time zone</label>
+          <select id="fTz"></select>
+        </div>
+      </div>
+    </div>
+    <label>Current streak (days)</label>
+    <input id="fStreak" type="number" min="0" step="1" value="0">
+    <label>Open link in</label>
+    <select id="fTarget">
+      <option value="_blank">New tab</option>
+      <option value="_self">Same tab</option>
+    </select>
+    <div class="dlgActions">
+      <button type="button" id="delBtn" class="danger" hidden>Delete</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+      <button type="submit" class="primary" id="saveBtn" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const KEY = 'dailyGames.v1';
+const HOUR = 3600e3;
+let games = load();
+let editingId = null;
+
+function load(){
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; }
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(games)); } catch(e){}
+}
+const uid = () => Math.random().toString(36).slice(2,10);
+const $ = id => document.getElementById(id);
+
+/* ---- time zone helpers (for fixed daily resets) ---- */
+const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const TZS = [['local','Local ('+localTz+')'],['America/New_York','Eastern'],['America/Chicago','Central'],['America/Denver','Mountain'],['America/Los_Angeles','Pacific'],['UTC','UTC'],['Europe/London','London'],['Asia/Tokyo','Tokyo']];
+$('fTz').innerHTML = TZS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+
+function tzOffsetMs(ts, tz){
+  const dtf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'});
+  const p = Object.fromEntries(dtf.formatToParts(new Date(ts)).map(x=>[x.type,x.value]));
+  const asUTC = Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);
+  return asUTC - Math.floor(ts/1000)*1000;
+}
+// Timestamp of HH:MM on the calendar day (y,m,d) in zone tz
+function zonedTs(y,m,d,hh,mm,tz){
+  if (tz==='local') return new Date(y,m-1,d,hh,mm,0,0).getTime();
+  const guess = Date.UTC(y,m-1,d,hh,mm,0);
+  let ts = guess - tzOffsetMs(guess, tz);
+  ts = guess - tzOffsetMs(ts, tz);
+  return ts;
+}
+function ymdIn(ts, tz){
+  if (tz==='local'){ const d=new Date(ts); return [d.getFullYear(),d.getMonth()+1,d.getDate()]; }
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date(ts)).map(x=>[x.type,x.value]));
+  return [+p.year,+p.month,+p.day];
+}
+// Most recent daily boundary at or before ts
+function lastBoundary(ts, g){
+  const [hh,mm] = (g.time||'00:00').split(':').map(Number);
+  const tz = g.tz||'local';
+  let [y,m,d] = ymdIn(ts,tz);
+  let b = zonedTs(y,m,d,hh,mm,tz);
+  if (b > ts){
+    const prev = new Date(Date.UTC(y,m-1,d-1));
+    b = zonedTs(prev.getUTCFullYear(),prev.getUTCMonth()+1,prev.getUTCDate(),hh,mm,tz);
+  }
+  return b;
+}
+function nextBoundary(ts, g){
+  const [hh,mm] = (g.time||'00:00').split(':').map(Number);
+  const tz = g.tz||'local';
+  const lb = lastBoundary(ts,g);
+  let [y,m,d] = ymdIn(lb + 12*HOUR, tz);
+  // find the next calendar day after lb's day
+  const [ly,lm,ld] = ymdIn(lb,tz);
+  const nd = new Date(Date.UTC(ly,lm-1,ld+1));
+  return zonedTs(nd.getUTCFullYear(),nd.getUTCMonth()+1,nd.getUTCDate(),hh,mm,tz);
+}
+
+/* ---- per-game state ---- */
+function compute(g, now){
+  if (!g.last) return {ready:true,lastReset:null,nextReset:null};
+  if (g.mode==='daily'){
+    const next = nextBoundary(g.last,g);
+    const ready = now >= next;
+    return {ready, lastReset:lastBoundary(now,g), nextReset: ready ? nextBoundary(now,g) : next};
+  }
+  const next = g.last + (g.hours||24)*HOUR;
+  const ready = now >= next;
+  return {ready, lastReset: ready ? next : null, nextReset: ready ? null : next};
+}
+
+/* ---- streaks ---- */
+// A streak survives if you played in the current or the previous reset period.
+function streakAlive(g, now){
+  if (!g.last) return true;
+  if (g.mode==='daily'){
+    const lb = lastBoundary(now,g);
+    return g.last >= lastBoundary(lb-1,g);
+  }
+  return now < g.last + 2*(g.hours||24)*HOUR;
+}
+function streakOf(g, now){ return streakAlive(g,now) ? (g.streak||0) : 0; }
+function streakDeadline(g, now){   // play before this to keep the streak
+  if (!g.last) return null;
+  return g.mode==='daily' ? nextBoundary(now,g) : g.last + 2*(g.hours||24)*HOUR;
+}
+function recordPlay(g){
+  const now = Date.now();
+  if (!compute(g,now).ready) return;   // repeat clicks during cooldown change nothing
+  g.prev = {last:g.last, streak:g.streak||0};
+  g.streak = streakAlive(g,now) ? (g.streak||0)+1 : 1;
+  g.last = now;
+}
+function undoPlay(g){
+  if (g.prev){ g.last=g.prev.last; g.streak=g.prev.streak; g.prev=null; }
+  else g.last=null;
+}
+
+const fmt = ts => ts==null ? '—' : new Date(ts).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function dur(ms){
+  ms = Math.max(0,ms); const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`;
+}
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- rendering ---- */
+function render(){
+  const list = $('list');
+  if (!games.length){ list.innerHTML = '<div class="empty">No games yet. Tap “+ Add” to start.</div>'; $('summary').textContent=''; return; }
+  const now = Date.now();
+  // Ready games first, then by soonest reset
+  const rows = games.map(g=>({g,s:compute(g,now)})).sort((a,b)=>{
+    if (a.s.ready!==b.s.ready) return a.s.ready?-1:1;
+    return (a.s.nextReset||0)-(b.s.nextReset||0);
+  });
+  const readyCount = rows.filter(r=>r.s.ready).length;
+  $('summary').textContent = readyCount ? `${readyCount} of ${rows.length} ready to play` : 'All done for now 🎉';
+  list.innerHTML = rows.map(({g,s})=>`
+    <div class="card ${s.ready?'ready':'wait'}" data-id="${g.id}">
+      <div class="top">
+        <div class="name">${esc(g.name)} <span class="streak">🔥 ${streakOf(g,now)}</span></div>
+        <div class="status">${s.ready?'Ready':'Done'}</div>
+      </div>
+      <div class="count" data-count="${g.id}">${s.ready?'Play now':dur(s.nextReset-now)}</div>
+      <div class="meta">
+        <span>Last played</span><span>${fmt(g.last)}</span>
+        <span>Last reset</span><span>${s.lastReset?fmt(s.lastReset):'—'}</span>
+        <span>Next reset</span><span>${s.nextReset?fmt(s.nextReset):'Ready now'}</span>
+        ${s.ready && streakOf(g,now)>0 && streakDeadline(g,now) ? `<span>Keep streak by</span><span>${fmt(streakDeadline(g,now))}</span>` : ''}
+        <span>Rule</span><span>${g.mode==='daily'?'Daily at '+esc(g.time)+' '+esc(tzLabel(g.tz)):'Every '+(g.hours||24)+'h after click'}</span>
+      </div>
+      <div class="actions">
+        <a class="play" href="${esc(g.url)}" target="${g.target||'_blank'}" rel="noopener" data-play="${g.id}">Play ▶</a>
+        <button data-done="${g.id}">${g.last&&!s.ready?'Undo':'Mark done'}</button>
+        <button data-edit="${g.id}">Edit</button>
+      </div>
+    </div>`).join('');
+}
+function tzLabel(tz){ const t=TZS.find(x=>x[0]===(tz||'local')); return t?(t[0]==='local'?'local':t[1]):tz; }
+
+function tick(){
+  const now = Date.now();
+  let needRender = false;
+  for (const g of games){
+    const s = compute(g,now);
+    const el = document.querySelector(`[data-count="${g.id}"]`);
+    if (!el) { needRender = true; continue; }
+    const card = el.closest('.card');
+    if (s.ready !== card.classList.contains('ready')) needRender = true;
+    else if (!s.ready) el.textContent = dur(s.nextReset-now);
+  }
+  if (needRender) render();
+}
+
+/* ---- events ---- */
+$('list').addEventListener('click', e=>{
+  const play = e.target.closest('[data-play]');
+  if (play){
+    const g = games.find(x=>x.id===play.dataset.play);
+    recordPlay(g); save();
+    setTimeout(render, 50);   // let the browser follow the link first
+    return;
+  }
+  const done = e.target.closest('[data-done]');
+  if (done){
+    const g = games.find(x=>x.id===done.dataset.done);
+    const s = compute(g,Date.now());
+    if (g.last && !s.ready) undoPlay(g); else recordPlay(g);
+    save(); render(); return;
+  }
+  const edit = e.target.closest('[data-edit]');
+  if (edit) openDlg(edit.dataset.edit);
+});
+
+function syncMode(){
+  const daily = $('fMode').value==='daily';
+  $('dailyOpts').hidden = !daily; $('rollingOpts').hidden = daily;
+}
+$('fMode').addEventListener('change', syncMode);
+$('addBtn').onclick = ()=>openDlg(null);
+$('cancelBtn').onclick = ()=>$('dlg').close();
+
+function openDlg(id){
+  editingId = id;
+  const g = id ? games.find(x=>x.id===id) : {name:'',url:'',mode:'rolling',hours:24,time:'00:00',tz:'local',target:'_blank'};
+  $('dlgTitle').textContent = id ? 'Edit game' : 'Add game';
+  $('fName').value=g.name; $('fUrl').value=g.url; $('fMode').value=g.mode||'rolling';
+  $('fHours').value=g.hours||24; $('fTime').value=g.time||'00:00'; $('fTz').value=g.tz||'local';
+  $('fTarget').value=g.target||'_blank';
+  $('fStreak').value = id ? streakOf(g,Date.now()) : 0;
+  $('delBtn').hidden = !id; syncMode();
+  $('dlg').showModal();
+}
+$('form').addEventListener('submit', e=>{
+  if (e.submitter && e.submitter.id!=='saveBtn') return;
+  const data = {
+    name:$('fName').value.trim(), url:$('fUrl').value.trim(), mode:$('fMode').value,
+    hours:parseFloat($('fHours').value)||24, time:$('fTime').value||'00:00', tz:$('fTz').value,
+    target:$('fTarget').value,
+    streak:Math.max(0,parseInt($('fStreak').value,10)||0)
+  };
+  if (editingId){
+    const g = games.find(x=>x.id===editingId);
+    if (data.streak !== streakOf(g,Date.now())) g.prev = null;   // manual change: no undo history
+    Object.assign(g, data);
+  }
+  else games.push({id:uid(), last:null, ...data});
+  save(); render();
+});
+$('delBtn').onclick = ()=>{
+  if (!confirm('Delete this game?')) return;
+  games = games.filter(x=>x.id!==editingId); save(); $('dlg').close(); render();
+};
+
+/* ---- backup ---- */
+$('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(games,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-games.json'; a.click();
+};
+$('importBtn').onclick = ()=>$('importFile').click();
+$('importFile').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const arr = JSON.parse(await f.text());
+    if (!Array.isArray(arr)) throw 0;
+    games = arr.filter(g=>g&&g.name&&g.url).map(g=>({id:uid(),last:null,streak:0,mode:'rolling',hours:24,...g}));
+    save(); render();
+  }catch(_){ alert('That file did not look like a Daily Games export.'); }
+  e.target.value='';
+};
+
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) render(); });
+window.addEventListener('storage', ()=>{ games = load(); render(); });
+render();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
